@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { BadgeProvider, useBadges } from "@/components/BadgeContext";
-import { LayoutDashboard, CalendarDays, CalendarCheck, MessageSquare, CreditCard, Settings, Briefcase, BadgePercent, Clock, User, ShieldAlert, Sparkles, Menu, Bell, LogOut, Mail, CalendarClock, X } from "lucide-react";
+import { LayoutDashboard, CalendarDays, CalendarCheck, MessageSquare, CreditCard, Settings, Briefcase, BadgePercent, Clock, User, ShieldAlert, Sparkles, Menu, Bell, LogOut, Mail, CalendarClock, X, AlertTriangle } from "lucide-react";
 
 const CUSTOMER_NAV = [
   { href: "/dashboard",          icon: <LayoutDashboard size={18} />, label: "Overview" },
@@ -14,6 +14,7 @@ const CUSTOMER_NAV = [
   { href: "/dashboard/bookings", icon: <CalendarCheck size={18} />, label: "Bookings" },
   { href: "/dashboard/messages", icon: <MessageSquare size={18} />, label: "Messages", badgeKey: "messages" },
   { href: "/dashboard/payments", icon: <CreditCard size={18} />, label: "Payments" },
+  { href: "/dashboard/disputes", icon: <AlertTriangle size={18} />, label: "Support" },
   { href: "/dashboard/settings", icon: <Settings size={18} />, label: "Settings" },
 ];
 
@@ -26,6 +27,7 @@ const PROVIDER_NAV = [
   { href: "/dashboard/provider/promotions",    icon: <BadgePercent size={18} />, label: "Promotions" },
   { href: "/dashboard/provider/availability",  icon: <Clock size={18} />, label: "Availability" },
   { href: "/dashboard/provider/profile",       icon: <User size={18} />, label: "My Profile" },
+  { href: "/dashboard/disputes", icon: <AlertTriangle size={18} />, label: "Support" },
   { href: "/dashboard/settings",               icon: <Settings size={18} />, label: "Settings" },
 ];
 

@@ -235,6 +235,7 @@ model Booking {
   messages        Message[]
   review          Review?
   payment         Payment?
+  disputes        Dispute[]
 
   @@map("bookings")
 }
@@ -354,5 +355,51 @@ model Payment {
   booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum DisputeCreatorRole {
+  CUSTOMER
+  PROVIDER
+}
+
+model Dispute {
+  id            String             @id @default(cuid())
+  title         String
+  description   String
+  status        DisputeStatus      @default(OPEN)
+  creatorId     String
+  creatorRole   DisputeCreatorRole
+  bookingId     String?
+  adminResponse String?
+  resolvedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  creator       User               @relation("DisputeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  booking       Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  attachments   DisputeAttachment[]
+
+  @@map("disputes")
+}
+
+model DisputeAttachment {
+  id         String   @id @default(cuid())
+  disputeId  String
+  filePath   String
+  fileName   String
+  fileSize   Int
+  createdAt  DateTime @default(now())
+
+  dispute    Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@map("dispute_attachments")
 }
 
