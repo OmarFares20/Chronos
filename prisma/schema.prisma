@@ -234,6 +234,7 @@ model Booking {
   package         Package?      @relation(fields: [packageId], references: [id])
   messages        Message[]
   review          Review?
+  payment         Payment?
 
   @@map("bookings")
 }
@@ -322,3 +323,36 @@ model Promotion {
 
   @@map("promotions")
 }
+
+enum PaymentMethod {
+  CARD
+  FAWRY
+  VODAFONE_CASH
+  INSTAPAY
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String        @unique
+  amount        Decimal       @db.Decimal(10, 2)
+  method        PaymentMethod
+  status        PaymentStatus @default(COMPLETED)
+  reference     String?       // payment ref / last4 / wallet number
+  paidAt        DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+

@@ -1,4 +1,4 @@
-import { PrismaClient, ServiceCategory } from "@prisma/client";
+import { PrismaClient, ServiceCategory, PaymentMethod, PaymentStatus, BookingStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -306,6 +306,144 @@ async function main() {
   }
 
   console.log(`Seeded ${providerCount} dynamic providers across all categories successfully.`);
+
+  // ── REALISTIC TRANSACTIONS ────────────────────────────────────────────────
+  console.log("Seeding realistic transactions for Insights...");
+
+  // Fetch all created customers and providers
+  const customers = await prisma.user.findMany({ where: { role: "CUSTOMER" } });
+  const providers = await prisma.providerProfile.findMany({
+    include: { services: { include: { packages: true } } },
+  });
+
+  // Filter providers that have packages
+  const providersWithPkgs = providers.filter(p => p.services.some(s => s.packages.length > 0));
+
+  const PAYMENT_METHODS: PaymentMethod[] = ["CARD", "FAWRY", "VODAFONE_CASH", "INSTAPAY", "BANK_TRANSFER"];
+
+  // Booking status distribution: ~40% RELEASED, 20% IN_ESCROW, 15% CONFIRMED, 15% DECLINED, 10% PENDING
+  const STATUS_WEIGHTS: { status: BookingStatus; weight: number }[] = [
+    { status: "RELEASED",  weight: 40 },
+    { status: "IN_ESCROW", weight: 20 },
+    { status: "CONFIRMED", weight: 15 },
+    { status: "DECLINED",  weight: 15 },
+    { status: "PENDING",   weight: 10 },
+  ];
+
+  function pickStatus(): BookingStatus {
+    const total = STATUS_WEIGHTS.reduce((s, w) => s + w.weight, 0);
+    let rand = Math.random() * total;
+    for (const { status, weight } of STATUS_WEIGHTS) {
+      rand -= weight;
+      if (rand <= 0) return status;
+    }
+    return "RELEASED";
+  }
+
+  // Generate a date in the past N months
+  function pastDate(monthsBack: number, daysVariance = 28): Date {
+    const d = new Date();
+    d.setMonth(d.getMonth() - monthsBack);
+    d.setDate(d.getDate() - randomInt(0, daysVariance));
+    return d;
+  }
+
+  let bookingCount = 0;
+
+  // Create 60 bookings spread across 6 months for chart coverage
+  for (let i = 0; i < 60; i++) {
+    const customer   = randomItem(customers);
+    const provider   = randomItem(providersWithPkgs);
+    const service    = randomItem(provider.services.filter(s => s.packages.length > 0));
+    const pkg        = randomItem(service.packages);
+    const status     = pickStatus();
+    const monthsBack = Math.floor(i / 10); // ~10 bookings per month for 6 months
+    const eventDate  = pastDate(monthsBack);
+    const createdAt  = new Date(eventDate.getTime() - randomInt(3, 30) * 86400000); // booked before event
+
+    // Create occasion/event
+    const event = await prisma.event.create({
+      data: {
+        customerId: customer.id,
+        name: randomItem(["Wedding Farah", "Corporate Gala", "Eid Celebration", "Birthday Hafla", "Graduation Party", "Engagement Night"]),
+        type: randomItem(["wedding", "corporate", "birthday", "engagement", "graduation", "celebration"]),
+        date: eventDate,
+        location: randomItem(LOCATIONS),
+        guestCount: randomInt(50, 500),
+        budget: randomInt(10000, 100000),
+        status: status === "RELEASED" ? "COMPLETED" : status === "DECLINED" ? "CANCELLED" : "CONFIRMED",
+        createdAt,
+        updatedAt: createdAt,
+      },
+    });
+
+    const amount        = Number(pkg.price);
+    const platformFee   = Math.round(amount * 0.05);
+    const providerPayout = amount - platformFee;
+
+    const booking = await prisma.booking.create({
+      data: {
+        eventId:       event.id,
+        customerId:    customer.id,
+        providerId:    provider.id,
+        packageId:     pkg.id,
+        status,
+        amount,
+        platformFee,
+        providerPayout,
+        eventDate,
+        scheduledTime: eventDate,
+        message:       "Looking forward to working with you!",
+        escrowReleasedAt: status === "RELEASED" ? new Date(eventDate.getTime() + 3 * 86400000) : null,
+        createdAt,
+        updatedAt: createdAt,
+      },
+    });
+
+    // Create Payment record for paid bookings
+    if (status === "RELEASED" || status === "IN_ESCROW") {
+      await prisma.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount,
+          method:    randomItem(PAYMENT_METHODS),
+          status:    "COMPLETED",
+          reference: `CHR-${booking.id.slice(-8).toUpperCase()}`,
+          paidAt:    new Date(createdAt.getTime() + randomInt(1, 3) * 86400000),
+          createdAt,
+          updatedAt: createdAt,
+        },
+      });
+    }
+
+    // Create review for released bookings
+    if (status === "RELEASED") {
+      const rating = randomItem([4, 4, 4, 5, 5, 5, 5, 3]);
+      await prisma.review.create({
+        data: {
+          bookingId:  booking.id,
+          customerId: customer.id,
+          providerId: provider.id,
+          rating,
+          comment: randomItem([
+            "Absolutely fantastic service! Exceeded all expectations.",
+            "Professional, punctual, and delivered exactly what was promised.",
+            "Our guests were blown away. Highly recommend!",
+            "Great quality and very attentive to our needs.",
+            "Would book again without hesitation. 5 stars!",
+            "Wonderful experience from start to finish.",
+            "Very responsive and the final result was stunning.",
+          ]),
+          helpfulCount: randomInt(0, 20),
+          createdAt: new Date(eventDate.getTime() + randomInt(3, 14) * 86400000),
+        },
+      }).catch(() => {}); // booking may already have a review — skip
+    }
+
+    bookingCount++;
+  }
+
+  console.log(`✓ Seeded ${bookingCount} transactions (bookings + payments + reviews).`);
 }
 
 main()

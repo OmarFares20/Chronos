@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
     // ── Aggregate stats ────────────────────────────────────────────────────────
     const totalOccasions  = events.length;
     const totalBookings   = bookings.length;
-    const totalSpent      = bookings.reduce((s, b) => s + Number(b.amount || 0), 0);
+    const paidBookings     = bookings.filter(b => ["IN_ESCROW", "RELEASED"].includes(b.status));
+    const totalSpent       = paidBookings.reduce((s, b) => s + Number(b.amount || 0), 0);
     const inEscrow        = bookings.filter(b => b.status === "IN_ESCROW").reduce((s, b) => s + Number(b.amount || 0), 0);
     const confirmedCount  = bookings.filter(b => ["CONFIRMED", "IN_ESCROW", "RELEASED"].includes(b.status)).length;
     const cancelledCount  = bookings.filter(b => b.status === "CANCELLED").length;
@@ -64,7 +65,8 @@ export async function GET(req: NextRequest) {
       const amount = bookings
         .filter(b => {
           const bd = new Date(b.createdAt);
-          return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth();
+          return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth()
+            && ["IN_ESCROW", "RELEASED"].includes(b.status);
         })
         .reduce((s, b) => s + Number(b.amount || 0), 0);
       monthlySpend.push({ month: label, amount });

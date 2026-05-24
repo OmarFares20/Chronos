@@ -212,10 +212,15 @@
 - **Provider detail page**: "Send a Message" button calls the new route, shows loading state, redirects to `/dashboard/messages?with=<userId>` (bounces to `/login` if not authenticated)
 - **Messages page**: reads `?with=<userId>` from URL via `useSearchParams`, auto-selects the correct conversation on load, fetches the thread with that partner immediately
 
-### [ ] Fix 3 – Seed Realistic Transactions for Insights
-- Generate 50+ completed bookings with varied statuses
-- Add Payment model if missing; seed payment records
-- Ensure Insights APIs aggregate the data correctly
+### [x] Fix 3 – Seed Realistic Transactions for Insights ✅
+- **`Payment` model added** to `schema.prisma` with `PaymentMethod` + `PaymentStatus` enums, linked to `Booking` (1-to-1)
+- **60 realistic bookings seeded** spread across 6 months, across all 3 customers + all providers
+  - Status distribution: ~40% `RELEASED`, 20% `IN_ESCROW`, 15% `CONFIRMED`, 15% `DECLINED`, 10% `PENDING`
+  - Each booking tied to a generated `Event` with matching status
+- **Payment records** created for all `RELEASED` and `IN_ESCROW` bookings with varied methods (CARD, FAWRY, VODAFONE_CASH, INSTAPAY, BANK_TRANSFER)
+- **Reviews** seeded for all `RELEASED` bookings (rating 3–5, varied comments)
+- **Customer insights API**: `totalSpent` and `monthlySpend` now only count paid bookings (`IN_ESCROW` + `RELEASED`)
+- **Re-seed command**: `npx prisma migrate dev --name add-payment && npx prisma db seed`
 
 ### [ ] Fix 4 – Restore & Enhance Payment Step with Provider Hold
 - "Proceed to Payment" button in customer booking details after provider confirms
