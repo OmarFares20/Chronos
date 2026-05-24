@@ -12,6 +12,8 @@ const STATUS_STYLE: Record<string, string> = {
   CONFIRMED: "statusConfirmed",
   DECLINED:  "statusDraft",
   IN_ESCROW: "statusEscrow",
+  RELEASED:  "statusReleased",
+  DECLINED:  "statusDeclined",
   COMPLETED: "statusConfirmed",
   CANCELLED: "statusDraft",
 };
@@ -119,8 +121,16 @@ export default function ProviderBookingsPage() {
                   {formatPrice(Number(b.providerPayout || b.amount || 0))}
                 </p>
                 <span className={`${styles.statusPill} ${styles[STATUS_STYLE[b.status] || "statusPending"]}`}>
-                  {b.status.replace("_", " ")}
+                  {b.status === "IN_ESCROW" ? "Payment in Escrow" :
+                   b.status === "RELEASED"  ? "✓ Payment Released" :
+                   b.status === "DECLINED"  ? "Declined" :
+                   b.status.replace("_", " ")}
                 </span>
+                {(b.status === "IN_ESCROW" || b.status === "RELEASED") && b.payment && (
+                  <span style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>
+                    via {b.payment.method?.replace("_", " ")}
+                  </span>
+                )}
                 <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.25rem" }}>
                   {b.status === "PENDING" && (
                     <>
@@ -145,11 +155,11 @@ export default function ProviderBookingsPage() {
                   {b.status === "IN_ESCROW" && (
                     <button
                       className={styles.btnGold}
-                      onClick={() => setConfirmAction({ id: b.id, status: "COMPLETED", label: "Mark this booking as completed? This will release the payment to you." })}
+                      onClick={() => setConfirmAction({ id: b.id, status: "RELEASED", label: "Mark this service as delivered? Payment will be released to you." })}
                       style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}
                       id={`complete-${b.id}`}
                     >
-                      Mark Completed
+                      Mark Delivered
                     </button>
                   )}
                 </div>

@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
           take: limit,
           include: {
             event: true,
-            provider: { select: { businessName: true, location: true } },
+            provider: { select: { businessName: true, location: true, userId: true } },
             package: true,
           },
           orderBy: { createdAt: "desc" },

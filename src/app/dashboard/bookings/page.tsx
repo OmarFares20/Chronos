@@ -5,7 +5,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { useToast } from "@/components/Toaster";
 import { humanStatus, statusClass } from "@/lib/ui";
-import { Star, CalendarCheck, CheckCircle } from "lucide-react";
+import { Star, CalendarCheck, CheckCircle, MessageSquare, ShieldCheck } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
 
 function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
@@ -76,6 +76,21 @@ export default function BookingsPage() {
     }
   };
 
+  const markReceived = async (bookingId: string) => {
+    const res = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "RELEASED" }),
+    });
+    if (res.ok) {
+      toast("Service marked as received! Payment released to provider.", "success");
+      mutate();
+    } else {
+      const err = await res.json();
+      toast(err.error || "Failed to update booking.", "error");
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
@@ -140,6 +155,44 @@ export default function BookingsPage() {
                   >
                     Proceed to Payment
                   </a>
+                )}
+
+                {b.status === "IN_ESCROW" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-end" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#56b3ff", display: "flex", alignItems: "center", gap: 4 }}>
+                      <ShieldCheck size={12} /> Payment held in escrow
+                    </span>
+                    <button
+                      className={styles.btnGold}
+                      onClick={() => markReceived(b.id)}
+                      style={{ padding: "0.3rem 0.75rem", fontSize: "0.78rem" }}
+                      id={`release-btn-${b.id}`}
+                    >
+                      ✓ Mark as Received
+                    </button>
+                    <a
+                      href={`/dashboard/messages?with=${b.provider?.userId}`}
+                      className={styles.btnGhost}
+                      style={{ padding: "0.3rem 0.75rem", fontSize: "0.75rem", textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}
+                    >
+                      <MessageSquare size={12} /> Message Provider
+                    </a>
+                  </div>
+                )}
+
+                {b.status === "RELEASED" && !b.review && (
+                  <button
+                    className={styles.btnGold}
+                    onClick={() => setReviewBooking(b)}
+                    style={{ padding: "0.3rem 0.75rem", fontSize: "0.78rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Star size={14} fill="currentColor" /> Leave Review
+                  </button>
+                )}
+                {b.status === "RELEASED" && b.review && (
+                  <span style={{ fontSize: "0.75rem", color: "#50c878", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <CheckCircle size={12} /> Reviewed
+                  </span>
                 )}
                 
                 {b.status === "COMPLETED" && !b.review && (

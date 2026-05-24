@@ -238,4 +238,19 @@
 
 ---
 
+---
+
+## Final Production Fixes
+
+### [x] Production Fix 1 – Full Payment Flow with Escrow & Egyptian Methods ✅
+- **Zod validation** added to `POST /api/bookings/[id]/pay` — validates method enum + reference string
+- **`PATCH /api/bookings/[id]`**: providers can now set `RELEASED`; customers can set `RELEASED` (Mark as Received); guard ensures booking must be `IN_ESCROW` first
+- **"Mark as Received" button** added to customer bookings page for `IN_ESCROW` bookings — calls PATCH → RELEASED; shows "Payment held in escrow" chip + "Message Provider" link
+- **"Mark Delivered" button** on provider bookings page for `IN_ESCROW` bookings → moves to `RELEASED`
+- **Payment method badge** shown on provider booking cards (e.g. "via FAWRY") for paid bookings
+- **Status labels improved**: `IN_ESCROW` → "Payment Held (Escrow)", `RELEASED` → "Completed & Released", `DECLINED` → "Declined"
+- **New CSS classes**: `statusReleased` (green), `statusDeclined` (red)
+- **Bookings API** now includes `payment` and `provider.userId` in responses
+- **Review flow** extended to `RELEASED` bookings (not just `COMPLETED`)
+
 *Last updated: 2026-05-24*

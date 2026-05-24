@@ -206,6 +206,8 @@
 .statusPlanning  { background: rgba(196,164,82,0.12);  border: 1px solid var(--color-border-gold); color: var(--color-gold-light); }
 .statusDraft     { background: rgba(255,255,255,0.04); border: 1px solid var(--color-border); color: var(--color-text-muted); }
 .statusEscrow    { background: rgba(86,179,255,0.1);   border: 1px solid rgba(86,179,255,0.3); color: #56b3ff; }
+.statusReleased  { background: rgba(80,200,120,0.13);  border: 1px solid rgba(80,200,120,0.4); color: #50c878; }
+.statusDeclined  { background: rgba(255,80,80,0.1);    border: 1px solid rgba(255,80,80,0.3);  color: #ff6b6b; }
 
 /* ── Bookings list ─────────────────────────────────── */
 .bookingsList {
