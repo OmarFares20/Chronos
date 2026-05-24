@@ -199,10 +199,12 @@
 
 ## Pending / In Progress
 
-### [ ] Fix 1 – Profile Pictures & Badge Placement
-- Replace randomuser.me human faces with business-appropriate avatars (ui-avatars.com)
-- Fix verified badge → move next to business name in card body
-- Fix discount badge z-index on package cards so it's not hidden
+### [x] Fix 1 – Profile Pictures & Badge Placement ✅
+- Replaced all `randomuser.me` human-face portraits with `ui-avatars.com` business logos (initials, gold-on-dark)
+- **Verified badge**: moved from absolute-positioned overlay → inline chip next to business name (green, CheckCircle icon)
+- **Top Rated badge**: inline chip next to name with gold Star icon (both on cards and detail pages)
+- **Discount % badge**: repositioned to `top: 12px, right: 12px` inside the card (no longer clipped by overflow:hidden), with bold gold background and drop shadow
+- Homepage Exclusive Deals: badge repositioned + provider logo thumbnail added
 
 ### [ ] Fix 2 – Working "Send a Message" Button
 - Provider detail page message button should open/create a conversation and redirect to messages page
@@ -219,4 +221,4 @@
 
 ---
 
-*Last updated: 2026-05-23*
+*Last updated: 2026-05-24*

@@ -1,6 +1,7 @@
 "use client";
 import styles from "./page.module.css";
 import Navbar from "@/components/Navbar";
+import { CheckCircle, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -211,8 +212,6 @@ export default function ProviderProfilePage() {
             ) : (
               <span className={styles.avatarInitial}>{provider.businessName.charAt(0)}</span>
             )}
-            {provider.badge && <span className={styles.avatarBadge}>{provider.badge}</span>}
-            {provider.isVerified && <span className={styles.verifiedBadge} title="Verified provider">✓ Verified</span>}
           </div>
 
           <div className={styles.heroInfo}>
@@ -220,7 +219,24 @@ export default function ProviderProfilePage() {
               <span className={styles.heroCategory}>{provider.categories[0]?.replace("_", " ")}</span>
               {provider.location && <><span className={styles.heroDot}>·</span><span className={styles.heroLocation}>◎ {provider.location}</span></>}
             </div>
-            <h1 className={styles.heroName}>{provider.businessName}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+              <h1 className={styles.heroName} style={{ margin: 0 }}>{provider.businessName}</h1>
+              {provider.isVerified && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(80,200,120,0.12)", border: "1px solid rgba(80,200,120,0.45)", borderRadius: "99px", padding: "0.2rem 0.65rem", fontSize: "0.72rem", fontWeight: 700, color: "#50c878", whiteSpace: "nowrap" }}>
+                  <CheckCircle size={13} /> Verified
+                </span>
+              )}
+              {provider.badge === "Top Rated" && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(196,164,82,0.18)", border: "1px solid var(--color-gold)", borderRadius: "99px", padding: "0.2rem 0.65rem", fontSize: "0.72rem", fontWeight: 700, color: "var(--color-gold)", whiteSpace: "nowrap" }}>
+                  <Star size={12} fill="currentColor" /> Top Rated
+                </span>
+              )}
+              {provider.badge && provider.badge !== "Top Rated" && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "rgba(192,194,204,0.1)", border: "1px solid var(--color-border)", borderRadius: "99px", padding: "0.2rem 0.65rem", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-silver-light)", whiteSpace: "nowrap" }}>
+                  {provider.badge}
+                </span>
+              )}
+            </div>
 
             <div className={styles.heroStats}>
               <div className={styles.heroStat}>
@@ -300,7 +316,11 @@ export default function ProviderProfilePage() {
                     onClick={() => setSelectedPackage(pkg.id)}
                   >
                     {pkg.isHighlight && !pkg.isPromotion && <div className={styles.packageBestBadge}>Most Popular</div>}
-                    {pkg.isPromotion && <div className={styles.packageBestBadge} style={{ background: 'var(--color-gold)', color: 'black' }}>🔥 {pkg.discountPercentage}% OFF</div>}
+                    {pkg.isPromotion && (
+                      <div style={{ position: "absolute", top: "12px", right: "12px", background: "var(--color-gold)", color: "#000", padding: "0.3rem 0.7rem", borderRadius: "8px", fontWeight: 800, fontSize: "0.78rem", letterSpacing: "0.04em", zIndex: 10, boxShadow: "0 2px 8px rgba(196,164,82,0.5)", display: "flex", alignItems: "center", gap: "4px" }}>
+                        🔥 {pkg.discountPercentage}% OFF
+                      </div>
+                    )}
                     <div className={styles.packageHeader}>
                       <h3 className={styles.packageName}>{pkg.name}</h3>
                       <p className={styles.packageDuration}>{pkg.duration}</p>

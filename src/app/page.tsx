@@ -183,10 +183,17 @@ export default async function HomePage() {
                 const originalPrice = Number(pkg.price) / (1 - (pkg.discountPercentage || 0) / 100);
                 return (
                   <Link key={pkg.id} href={`/providers/${pkg.service.providerId}`} className={styles.serviceCard}>
-                    <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'var(--color-gold)', color: 'black', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', zIndex: 10 }}>
+                    <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--color-gold)', color: '#000', padding: '0.3rem 0.7rem', borderRadius: '8px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.76rem', zIndex: 10, letterSpacing: '0.03em', boxShadow: '0 2px 8px rgba(196,164,82,0.4)' }}>
                       <Tag size={12} /> {pkg.discountPercentage}% OFF
                     </div>
-                    <span className={styles.serviceIcon} style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>%</span>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.25rem', border: '1px solid var(--color-border-gold)' }}>
+                      <img
+                        src={`https://picsum.photos/seed/${pkg.service.provider.businessName.replace(/\s+/g, '')}/56`}
+                        alt={pkg.service.provider.businessName}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
                     <h3 className={styles.serviceTitle}>{pkg.name}</h3>
                     <p className={styles.serviceDesc} style={{ color: 'var(--color-gold)', fontWeight: 'bold' }}>
                       {pkg.service.provider.businessName}

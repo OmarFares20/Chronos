@@ -3,8 +3,11 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-// ── Portrait & Gallery helpers ────────────────────────────────────────────────
-function portrait(gender: "men" | "women", n: number) { return `https://randomuser.me/api/portraits/${gender}/${n}.jpg`; }
+// ── Avatar & Gallery helpers ────────────────────────────────────────────────
+function businessAvatar(name: string, bg = "1a1b2e", fg = "C4A452") {
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${bg}&color=${fg}&size=200&bold=true&font-size=0.45`;
+}
 function gallery(category: string, n: number) { return `https://picsum.photos/seed/${category}-${n}/400/300`; }
 
 function randomInt(min: number, max: number) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -185,15 +188,15 @@ async function main() {
       email: "admin@chronos.com",
       password: adminPassword,
       role: "ADMIN",
-      avatarUrl: portrait("women", 44),
+      avatarUrl: businessAvatar("Chronos Admin"),
     },
   });
 
   // ── CUSTOMERS ─────────────────────────────────────────────────────────────
   const customersData = [
-    { name: "Yasmine El-Sayed", email: "yasmine@example.com", avatar: portrait("women", 22) },
-    { name: "Mohamed Youssef", email: "mohamed@example.com", avatar: portrait("men", 33) },
-    { name: "Omar Hassan", email: "omar@example.com", avatar: portrait("men", 15) },
+    { name: "Yasmine El-Sayed", email: "yasmine@example.com", avatar: businessAvatar("YE", "2d1b4e", "C4A452") },
+    { name: "Mohamed Youssef", email: "mohamed@example.com", avatar: businessAvatar("MY", "1a2d1b", "C4A452") },
+    { name: "Omar Hassan", email: "omar@example.com", avatar: businessAvatar("OH", "1b1a2d", "C4A452") },
   ];
 
   for (const c of customersData) {
@@ -228,12 +231,12 @@ async function main() {
         const isMale = Math.random() > 0.5;
         const firstName = isMale ? randomItem(FIRST_NAMES_MALE) : randomItem(FIRST_NAMES_FEMALE);
         businessName = `${firstName} ${randomItem(LAST_NAMES)} ${randomItem(tpl.suffix)}`;
-        avatarUrl = portrait(isMale ? "men" : "women", randomInt(1, 99));
       } else {
         const prefix = Math.random() > 0.3 ? randomItem(ADJECTIVES) : randomItem(tpl.prefix);
         businessName = `${prefix} ${randomItem(tpl.suffix)}`;
-        avatarUrl = portrait(Math.random() > 0.5 ? "men" : "women", randomInt(1, 99));
       }
+      // Always use business-appropriate logo (no human faces)
+      avatarUrl = businessAvatar(businessName);
 
       // 1 service per provider (to simplify and ensure exactly 3 tiered packages)
       const serviceData = Array.from({ length: 1 }).map((_, sIdx) => {

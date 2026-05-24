@@ -255,23 +255,18 @@ export default function ProvidersPage() {
                 const badgeClassName = `badge${badgeColor.charAt(0).toUpperCase() + badgeColor.slice(1)}`;
                 return (
                   <Link key={p.id} href={`/providers/${p.id}`} className={styles.card} id={`provider-card-${p.id}`}>
-                    <div className={styles.cardImg} aria-hidden="true" style={{ position: 'relative' }}>
+                    <div className={styles.cardImg} aria-hidden="true" style={{ position: "relative" }}>
                       <div className={styles.cardImgOverlay} />
-                      <span className={styles.cardImgIcon}>
-                        {p.categories[0] ? p.categories[0].charAt(0) : <Diamond size={24} />}
-                      </span>
-                      {p.user?.avatarUrl && (
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--color-bg)', zIndex: 2 }}>
-                          <img src={p.user.avatarUrl} alt={p.businessName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      )}
-                      {p.badge && (
-                        <span className={`${styles.badge} ${styles[badgeClassName] || ""}`}>
-                          {p.badge}
+                      {p.user?.avatarUrl ? (
+                        <img
+                          src={p.user.avatarUrl}
+                          alt={p.businessName}
+                          style={{ width: "72px", height: "72px", borderRadius: "12px", objectFit: "cover", border: "2px solid var(--color-border-gold)", position: "relative", zIndex: 2 }}
+                        />
+                      ) : (
+                        <span className={styles.cardImgIcon}>
+                          {p.categories[0] ? p.categories[0].charAt(0) : <Diamond size={24} />}
                         </span>
-                      )}
-                      {p.isVerified && (
-                        <span className={styles.verifiedChip} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><CheckCircle size={14} color="var(--color-gold)" fill="var(--color-bg)" /></span>
                       )}
                     </div>
 
@@ -280,7 +275,24 @@ export default function ProvidersPage() {
                         <span className={styles.cardCategory}>{p.categories[0]?.replace("_", " ").toLowerCase()}</span>
                         {p.location && <span className={styles.cardLocation} style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {p.location}</span>}
                       </div>
-                      <h3 className={styles.cardName}>{p.businessName}</h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <h3 className={styles.cardName} style={{ margin: 0 }}>{p.businessName}</h3>
+                        {p.isVerified && (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: "rgba(80,200,120,0.12)", border: "1px solid rgba(80,200,120,0.4)", borderRadius: "99px", padding: "0.1rem 0.45rem", fontSize: "0.62rem", fontWeight: 600, color: "#50c878", whiteSpace: "nowrap" }}>
+                            <CheckCircle size={11} /> Verified
+                          </span>
+                        )}
+                        {p.badge === "Top Rated" && (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: "rgba(196,164,82,0.18)", border: "1px solid var(--color-gold)", borderRadius: "99px", padding: "0.1rem 0.45rem", fontSize: "0.62rem", fontWeight: 600, color: "var(--color-gold)", whiteSpace: "nowrap" }}>
+                            <Star size={10} fill="currentColor" /> Top Rated
+                          </span>
+                        )}
+                        {p.badge && p.badge !== "Top Rated" && (
+                          <span className={`${styles.badge} ${styles[badgeClassName] || ""}`} style={{ position: "static", transform: "none" }}>
+                            {p.badge}
+                          </span>
+                        )}
+                      </div>
                       {p.bio && <p className={styles.cardBio}>{p.bio.slice(0, 120)}{p.bio.length > 120 ? "…" : ""}</p>}
                     </div>
 
