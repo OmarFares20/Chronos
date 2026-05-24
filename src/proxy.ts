@@ -6,7 +6,7 @@ const PROTECTED_PREFIXES = ["/dashboard", "/planner", "/admin"];
 const ADMIN_PREFIXES     = ["/admin"];
 const AUTH_PAGES         = ["/login", "/register"];
 
-export async function proxy(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ── Skip Next.js internals and static assets ──────────────────────────────

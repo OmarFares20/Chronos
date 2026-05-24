@@ -254,3 +254,24 @@
 - **Review flow** extended to `RELEASED` bookings (not just `COMPLETED`)
 
 *Last updated: 2026-05-24*
+
+### [x] Production Fix 3 – My Occasions Page Redesign ✅
+- **Events API** enriched: now returns full booking details per event (provider businessName/userId, package name/price/duration, payment method/date)
+- **Complete page rewrite** (`src/app/dashboard/events/page.tsx`):
+  - Responsive card grid: `repeat(auto-fill, minmax(340px, 1fr))` — 1 col mobile, 2 tablet, 3 desktop
+  - **Filter tabs**: All / Upcoming (n) / Past (n) with gold active state
+  - **Section dividers**: "Upcoming" (gold) and "Past" (muted) headers separating time periods; past cards at 75% opacity
+  - Sort: upcoming events first (soonest → latest), then past (most recent → oldest)
+  - **Occasion Card**:
+    - Header strip: emoji icon by type, occasion name, type label, status badge, countdown ("3d away" / "Today!" in red if ≤7d, "14d ago" for past)
+    - Detail chips: 📅 date, 📍 location, 👥 guest count, 📄 budget
+    - Financials row: Services Booked / Total Value / Paid — all formatted in EGP
+    - Bookings accordion: collapsed by default, expands to show per-provider rows
+    - Empty state inline: "No services booked yet" + Browse Providers link
+    - Footer: Add Service + Cancel buttons
+  - **Booking Row** (inside accordion): provider initials avatar, name, package, amount, status badge; expandable to show payment method, date, message excerpt
+  - **Booking Actions** per status: Pay Now (CONFIRMED), Mark Received (IN_ESCROW), Leave Review (RELEASED/COMPLETED), Message Provider, Dispute
+  - **Empty state**: full-screen illustration with "Browse Providers" CTA
+  - **Loading skeletons**: 3 pulsing placeholder cards
+  - SWR with 10s refresh interval for live updates
+

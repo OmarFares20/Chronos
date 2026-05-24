@@ -22,7 +22,15 @@ export async function GET(req: NextRequest) {
     const events = await prisma.event.findMany({
       where: { customerId: auth.userId },
       orderBy: { date: "asc" },
-      include: { bookings: { select: { id: true, status: true } } },
+      include: {
+        bookings: {
+          include: {
+            provider: { select: { id: true, businessName: true, location: true, userId: true } },
+            package:  { select: { id: true, name: true, price: true, duration: true } },
+            payment:  { select: { method: true, paidAt: true } },
+          },
+        },
+      },
     });
     return NextResponse.json({ events });
   } catch (e: unknown) {
