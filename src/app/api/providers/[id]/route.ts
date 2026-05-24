@@ -10,7 +10,7 @@ export async function GET(
     const provider = await prisma.providerProfile.findUnique({
       where: { id },
       include: {
-        user: { select: { name: true, email: true, avatarUrl: true, createdAt: true } },
+        user: { select: { id: true, name: true, email: true, avatarUrl: true, createdAt: true } },
         services: { include: { packages: true } },
         reviews: {
           include: { customer: { select: { name: true } } },
@@ -34,6 +34,7 @@ export async function GET(
         ...provider,
         // avatarUrl from ProviderProfile takes precedence over user.avatarUrl
         avatarUrl: provider.avatarUrl || provider.user?.avatarUrl || null,
+        userId: provider.userId,
         avgRating,
       },
     });

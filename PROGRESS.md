@@ -206,8 +206,11 @@
 - **Discount % badge**: repositioned to `top: 12px, right: 12px` inside the card (no longer clipped by overflow:hidden), with bold gold background and drop shadow
 - Homepage Exclusive Deals: badge repositioned + provider logo thumbnail added
 
-### [ ] Fix 2 – Working "Send a Message" Button
-- Provider detail page message button should open/create a conversation and redirect to messages page
+### [x] Fix 2 – Working "Send a Message" Button ✅
+- **Provider API** (`/api/providers/[id]`): now exposes `userId` of the provider's account
+- **New route** `POST /api/messages/conversation`: resolves `providerId → userId`, seeds a greeting message if no conversation exists, creates a notification for the provider
+- **Provider detail page**: "Send a Message" button calls the new route, shows loading state, redirects to `/dashboard/messages?with=<userId>` (bounces to `/login` if not authenticated)
+- **Messages page**: reads `?with=<userId>` from URL via `useSearchParams`, auto-selects the correct conversation on load, fetches the thread with that partner immediately
 
 ### [ ] Fix 3 – Seed Realistic Transactions for Insights
 - Generate 50+ completed bookings with varied statuses

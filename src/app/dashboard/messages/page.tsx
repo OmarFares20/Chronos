@@ -2,6 +2,7 @@
 import styles from "./messages.module.css";
 import dashStyles from "../page.module.css";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { notifyBadgesUpdated } from "@/components/BadgeContext";
 import { MessageSquare, ArrowUp } from "lucide-react";
@@ -100,6 +101,8 @@ function timeLabel(iso: string) {
 
 export default function MessagesPage() {
   const { user }  = useAuth();
+  const searchParams = useSearchParams();
+  const withUserId   = searchParams.get("with");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId]   = useState<string | null>(null);
   const [newMessage, setNewMessage]       = useState("");
@@ -122,10 +125,15 @@ export default function MessagesPage() {
       .then((data) => {
         const convs = groupConversations(data.messages || [], user.id);
         setConversations(convs);
-        if (convs.length > 0) setActiveConvId((prev) => prev || convs[0].userId);
+        // Auto-select conversation from ?with= URL param, or first conversation
+        setActiveConvId((prev) => {
+          if (prev) return prev;
+          if (withUserId && convs.some((c) => c.userId === withUserId)) return withUserId;
+          return convs[0]?.userId || null;
+        });
       })
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, withUserId]);
 
   // Mark conversation as read on the server and notify badge context
   const markAsRead = useCallback((withUserId: string) => {
@@ -195,6 +203,26 @@ export default function MessagesPage() {
 
   // ── Mount: load data then start SSE ────────────────────────────────────
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  // If redirected here with ?with= param, ensure that conversation is active
+  // even if no messages exist yet (the /api/messages/conversation route seeds one)
+  useEffect(() => {
+    if (!withUserId || !user) return;
+    setActiveConvId(withUserId);
+    // Fetch messages specifically with that partner to populate the thread
+    fetch(`/api/messages?withUserId=${withUserId}`)
+      .then((r) => r.ok ? r.json() : { messages: [] })
+      .then((data) => {
+        if (!data.messages?.length) return;
+        setConversations((prev) => {
+          const merged = mergeMessages(prev, data.messages, user.id);
+          return merged;
+        });
+        setActiveConvId(withUserId);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withUserId, user]);
 
   useEffect(() => {
     if (!user) return;

@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import { CheckCircle, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { addToCart, getCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/formatPrice";
 
@@ -119,6 +119,8 @@ export default function ProviderProfilePage() {
   const [toast, setToast]                     = useState<string | null>(null);
   const [inCart, setInCart]                   = useState(false);
   const [helpfulVotes, setHelpfulVotes]       = useState<Record<string, boolean>>({});
+  const router = useRouter();
+  const [messagingLoading, setMessagingLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/providers/${params.id}`)
@@ -143,6 +145,33 @@ export default function ProviderProfilePage() {
 
   const allPackages = provider?.services.flatMap((s) => s.packages) || [];
   const selectedPkg = allPackages.find((p) => p.id === selectedPackage);
+
+  const handleSendMessage = async () => {
+    if (!provider) return;
+    setMessagingLoading(true);
+    try {
+      const res = await fetch("/api/messages/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ providerId: provider.id }),
+      });
+      if (res.status === 401) {
+        router.push("/login?redirect=" + encodeURIComponent(window.location.pathname));
+        return;
+      }
+      if (res.ok) {
+        const { userId } = await res.json();
+        router.push(`/dashboard/messages?with=${userId}`);
+      } else {
+        const err = await res.json();
+        setToast(err.error || "Could not open conversation. Please try again.");
+      }
+    } catch {
+      setToast("Network error. Please try again.");
+    } finally {
+      setMessagingLoading(false);
+    }
+  };
 
   const handleAddToPlan = () => {
     if (!selectedPkg || !provider) return;
@@ -470,8 +499,14 @@ export default function ProviderProfilePage() {
                   + Add to Occasion Plan
                 </button>
               )}
-              <button className={styles.sidebarMessageBtn} id="provider-send-message">
-                Send a Message
+              <button
+                className={styles.sidebarMessageBtn}
+                id="provider-send-message"
+                onClick={handleSendMessage}
+                disabled={messagingLoading}
+                style={{ opacity: messagingLoading ? 0.7 : 1, cursor: messagingLoading ? "wait" : "pointer" }}
+              >
+                {messagingLoading ? "Opening…" : "Send a Message"}
               </button>
 
               <p className={styles.sidebarNote}>
