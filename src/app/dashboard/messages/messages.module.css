@@ -202,83 +202,92 @@
 .chatMessages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  /* Full width column — each row controls its own alignment */
-  align-items: stretch;
+  gap: 0.35rem;
 }
 
+/* ── Each message row is full width ─────────────────────────────────────── */
 .messageBubble {
   display: flex;
   flex-direction: row;
-  justify-content: flex-start; /* received: bubble hugs LEFT */
   align-items: flex-end;
-  gap: 0.75rem;
-  width: 100%;                 /* full row width */
-  animation: fadeInUp 0.2s ease;
+  gap: 0.6rem;
+  width: 100%;
+  /* received: avatar on left, bubble next to it, nothing on right */
+  justify-content: flex-start;
+  animation: fadeInUp 0.18s ease;
 }
 
+/* sent: flip direction so avatar is on right, bubble hugs right edge */
 .messageBubbleSelf {
-  justify-content: flex-end;   /* sent: bubble hugs RIGHT */
-  flex-direction: row-reverse; /* avatar goes after the bubble */
+  flex-direction: row-reverse;
+  justify-content: flex-start; /* row-reverse makes flex-start = right side */
 }
 
+/* ── Avatar circle ───────────────────────────────────────────────────────── */
 .bubbleAvatar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #1a1a2e, #2a2a4e);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--color-silver);
   flex-shrink: 0;
+  align-self: flex-end; /* sits at the bottom of multi-line bubbles */
 }
 
+/* ── Bubble content wrapper (holds text + timestamp) ─────────────────────── */
 .bubbleContent {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  max-width: 65%;  /* bubble text won't exceed 65% of chat width */
+  gap: 0.2rem;
+  max-width: 60%; /* never wider than 60% of the chat pane */
 }
 
+/* sent: timestamp right-aligned under bubble */
 .messageBubbleSelf .bubbleContent {
-  align-items: flex-end;  /* timestamp aligns to right under sent bubble */
+  align-items: flex-end;
 }
 
+/* received: timestamp left-aligned under bubble */
+.messageBubble:not(.messageBubbleSelf) .bubbleContent {
+  align-items: flex-start;
+}
+
+/* ── Bubble text ─────────────────────────────────────────────────────────── */
 .bubbleText {
-  padding: 0.75rem 1rem;
-  border-radius: 16px;
+  padding: 0.65rem 0.95rem;
+  border-radius: 18px;
   font-size: 0.88rem;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--color-text-primary);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
+  word-break: break-word;
+  /* received bubble */
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 4px 18px 18px 18px; /* top-left flat = tail side */
 }
 
+/* sent bubble */
 .messageBubbleSelf .bubbleText {
-  background: rgba(196,164,82,0.14);
-  border-color: rgba(196,164,82,0.3);
-  border-radius: 16px 4px 16px 16px;  /* tail on top-right for sent messages */
+  background: rgba(196,164,82,0.16);
+  border-color: rgba(196,164,82,0.32);
+  border-radius: 18px 4px 18px 18px; /* top-right flat = tail side */
 }
 
-/* Other person's bubble: tail on top-left */
-.messageBubble:not(.messageBubbleSelf) .bubbleText {
-  border-radius: 4px 16px 16px 16px;
-}
-
+/* ── Timestamp ───────────────────────────────────────────────────────────── */
 .bubbleTime {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--color-text-muted);
-  padding: 0 0.25rem;
-}
-
-.messageBubbleSelf .bubbleTime {
-  text-align: right;
+  padding: 0 0.2rem;
+  white-space: nowrap;
 }
 
 /* Date divider */
@@ -368,8 +377,8 @@
 @media (max-width: 768px) {
   .messagesShell { flex-direction: column; height: auto; }
   .convPanel { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); max-height: 280px; }
-  .messageBubble { max-width: 85%; }
-  .chatMessages { padding: 1rem; }
+  .bubbleContent { max-width: 75%; }
+  .chatMessages { padding: 0.75rem 1rem; }
 }
 
 /* ── Typing indicator bubble ─────────────────────────────────────────────── */
