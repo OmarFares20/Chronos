@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PLANNING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  IN_ESCROW
+  RELEASED
+  DISPUTED
+  CANCELLED
+  REFUNDED
+}
+
+enum ServiceCategory {
+  PHOTOGRAPHY
+  CATERING
+  DECOR
+  MUSIC
+  PLANNING
+  VENUE
+  TRANSPORT
+  SECURITY
+  VIDEOGRAPHY
+  FLORIST
+  MAKEUP
+  ENTERTAINMENT
+  HOSPITALITY
+  STATIONERY
+  CHILDCARE
+  EMCEE
+  SOUND_SYSTEM
+  TENT_RENTAL
+  WAITSTAFF
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FLAT
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ── Models ─────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(CUSTOMER)
+  avatarUrl     String?
+  phone         String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  events             Event[]               @relation("CustomerEvents")
+  provider           ProviderProfile?
+  providerApplication ProviderApplication?
+  bookingsAs         Booking[]             @relation("CustomerBookings")
+  sentMessages       Message[]             @relation("SentMessages")
+  receivedMessages   Message[]             @relation("ReceivedMessages")
+  reviews            Review[]              @relation("CustomerReviews")
+
+  @@map("users")
+}
+
+model ProviderApplication {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  status             ApplicationStatus @default(PENDING)
+  commercialRegister String            // file path
+  taxCard            String            // file path
+  idCard             String            // file path
+  rejectionReason    String?           @db.Text
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("provider_applications")
+}
+
+model ProviderProfile {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  businessName       String
+  bio                String?           @db.Text
+  location           String?
+  addresses          String[]
+  responseTime       String?
+  since              Int?
+  isVerified         Boolean           @default(false)
+  badge              String?
+  categories         ServiceCategory[]
+  operatingHours     String?           // JSON: { mon: "9am-6pm", ... }
+  faq                String?           @db.Text  // JSON: [{ q, a }, ...]
+  cancellationPolicy String?           @db.Text
+  minBookingDays     Int?
+  languages          String[]
+  socialLinks        String?           // JSON: { instagram, facebook, website }
+  avatarUrl          String?           // Profile photo — /uploads/<file> or external URL
+  isSetupComplete    Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  // Relations
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services         Service[]
+  bookings         Booking[]         @relation("ProviderBookings")
+  reviews          Review[]          @relation("ProviderReviews")
+  galleryItems     GalleryItem[]
+  availability     ProviderAvailability[]
+  promotions       Promotion[]
+
+  @@map("provider_profiles")
+}
+
+model Service {
+  id          String          @id @default(cuid())
+  providerId  String
+  category    ServiceCategory
+  name        String
+  description String?         @db.Text
+  tags        String[]
+  paymentMethods String[]     // e.g. ["cash", "card", "bank_transfer"]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  packages    Package[]
+
+  @@map("services")
+}
+
+model Package {
+  id          String    @id @default(cuid())
+  serviceId   String
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  currency    String    @default("USD")
+  duration    String?
+  features    String[]
+  notIncluded String[]  // "What's NOT included"
+  isHighlight Boolean   @default(false)
+  isPromotion Boolean   @default(false)
+  discountPercentage Int?
+  minAdvanceDays Int?   // min days advance notice
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  service     Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+
+  @@map("packages")
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  customerId  String
+  name        String
+  type        String
+  date        DateTime
+  endDate     DateTime?
+  location    String
+  guestCount  Int
+  budget      Decimal?    @db.Decimal(12, 2)
+  vision      String?     @db.Text
+  status      EventStatus @default(DRAFT)
+  services    String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  customer    User        @relation("CustomerEvents", fields: [customerId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+
+  @@map("events")
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  eventId         String
+  customerId      String
+  providerId      String
+  packageId       String?
+  status          BookingStatus @default(PENDING)
+  amount          Decimal       @db.Decimal(10, 2)
+  platformFee     Decimal?      @db.Decimal(10, 2)
+  providerPayout  Decimal?      @db.Decimal(10, 2)
+  eventDate       DateTime?
+  scheduledTime   DateTime?     // When this service slot starts at the event
+  occasionLabel   String?       // Groups related bookings from same planner session
+  message         String?       @db.Text
+  stripePaymentId String?
+  escrowReleasedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  event           Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  customer        User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  provider        ProviderProfile @relation("ProviderBookings", fields: [providerId], references: [id])
+  package         Package?      @relation(fields: [packageId], references: [id])
+  messages        Message[]
+  review          Review?
+
+  @@map("bookings")
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  bookingId   String?
+  senderId    String
+  receiverId  String
+  content     String    @db.Text
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  booking     Booking?  @relation(fields: [bookingId], references: [id])
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id])
+  receiver    User      @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@map("messages")
+}
+
+model Review {
+  id              String    @id @default(cuid())
+  bookingId       String    @unique
+  customerId      String
+  providerId      String
+  rating          Int
+  comment         String?   @db.Text
+  providerReply   String?   @db.Text
+  helpfulCount    Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  customer    User      @relation("CustomerReviews", fields: [customerId], references: [id])
+  provider    ProviderProfile @relation("ProviderReviews", fields: [providerId], references: [id])
+
+  @@map("reviews")
+}
+
+model GalleryItem {
+  id          String    @id @default(cuid())
+  providerId  String
+  imageUrl    String
+  label       String?
+  aspect      String    @default("landscape")
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("gallery_items")
+}
+
+model ProviderAvailability {
+  id          String    @id @default(cuid())
+  providerId  String
+  date        DateTime
+  isBlocked   Boolean   @default(true)
+  note        String?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("provider_availability")
+}
+
+model Promotion {
+  id          String        @id @default(cuid())
+  providerId  String
+  code        String?       @unique
+  title       String
+  type        PromotionType
+  value       Decimal       @db.Decimal(10, 2)
+  minAmount   Decimal?      @db.Decimal(10, 2)
+  expiresAt   DateTime?
+  isActive    Boolean       @default(true)
+  usageCount  Int           @default(0)
+  maxUsage    Int?
+  createdAt   DateTime      @default(now())
+
+  // Relations
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("promotions")
+}

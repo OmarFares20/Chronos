@@ -1,0 +1,261 @@
+/* ── Payments / Escrow Page ─────────────────────────────────────────────── */
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) { .summaryRow { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .summaryRow { grid-template-columns: 1fr; } }
+
+.summaryCard {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 1.4rem 1.25rem;
+  transition: border-color 0.2s;
+}
+.summaryCard:hover { border-color: rgba(196,164,82,0.25); }
+
+.summaryIcon {
+  font-size: 1.4rem;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.summaryLabel {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+
+.summaryValue {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+  letter-spacing: 0.04em;
+}
+
+.summaryValueGold {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.summaryNote {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Escrow info bar */
+.escrowInfoBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(196,164,82,0.05);
+  border: 1px solid rgba(196,164,82,0.2);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.escrowInfoIcon {
+  font-size: 1.5rem;
+  color: var(--color-gold);
+  flex-shrink: 0;
+}
+
+.escrowInfoText {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* Filter bar */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.filterLabel {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.filterChip {
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filterChip:hover { border-color: rgba(196,164,82,0.3); color: var(--color-gold); }
+.filterChipActive {
+  background: rgba(196,164,82,0.12);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+/* Transactions table */
+.tableWrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHead {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.th {
+  padding: 0.85rem 1.25rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.tr:last-child { border-bottom: none; }
+.tr:hover { background: rgba(255,255,255,0.02); }
+
+.td {
+  padding: 1rem 1.25rem;
+  font-size: 0.88rem;
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.tdMuted { color: var(--color-text-muted); font-size: 0.8rem; }
+
+.amountPositive { color: #4ade80; font-weight: 600; }
+.amountNeutral { color: var(--color-gold); font-weight: 600; }
+
+/* Status pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pillEscrow  { background: rgba(196,164,82,0.12); color: var(--color-gold); border: 1px solid rgba(196,164,82,0.3); }
+.pillRelease { background: rgba(74,222,128,0.1);  color: #4ade80;         border: 1px solid rgba(74,222,128,0.25); }
+.pillPending { background: rgba(148,163,184,0.08); color: #94a3b8;         border: 1px solid rgba(148,163,184,0.2); }
+.pillRefund  { background: rgba(239,68,68,0.08);   color: #f87171;         border: 1px solid rgba(239,68,68,0.2); }
+
+.pillDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Escrow timeline */
+.timelineWrap {
+  margin-top: 2rem;
+}
+
+.timelineTitle {
+  font-size: 1rem;
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.timelineLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.timelineDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: var(--color-bg);
+  flex-shrink: 0;
+}
+
+.timelineDotActive {
+  border-color: var(--color-gold);
+  background: rgba(196,164,82,0.2);
+  box-shadow: 0 0 8px rgba(196,164,82,0.4);
+}
+
+.timelineDotDone {
+  border-color: #4ade80;
+  background: rgba(74,222,128,0.2);
+}
+
+.timelineConnector {
+  width: 2px;
+  height: 40px;
+  background: rgba(255,255,255,0.06);
+  margin: 2px 0;
+}
+
+.timelineContent {
+  padding-bottom: 1.5rem;
+}
+
+.timelineStep {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.timelineDesc {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+/* Empty */
+.empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--color-text-muted);
+}
+
+.emptyIcon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+.emptyTitle { font-size: 1rem; color: var(--color-text-secondary); margin-bottom: 0.5rem; }

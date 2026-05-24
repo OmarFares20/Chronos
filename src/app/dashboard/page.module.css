@@ -1,0 +1,415 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.5s var(--ease-elegant) both;
+}
+
+/* ── Stats row ─────────────────────────────────────── */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.statCard {
+  padding: 1.35rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.02);
+  transition: border-color var(--duration-normal) var(--ease-elegant),
+              transform var(--duration-normal) var(--ease-elegant);
+  animation: fadeInUp 0.5s var(--ease-elegant) both;
+}
+.statCard:hover {
+  border-color: var(--color-border-gold);
+  transform: translateY(-2px);
+}
+
+.statLabel {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+.statValue {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.35rem;
+}
+.statDelta {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+.statUp { color: #6fcf97; }
+
+/* ── Grid ──────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+/* ── Card ──────────────────────────────────────────── */
+.card {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: rgba(16, 17, 26, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fadeInUp 0.5s var(--ease-elegant) 0.1s both;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-text-primary);
+}
+.cardLink {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--color-gold);
+  transition: color var(--duration-fast) var(--ease-elegant);
+}
+.cardLink:hover { color: var(--color-gold-light); }
+
+/* ── Events list ───────────────────────────────────── */
+.eventsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.eventRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.02);
+  transition: border-color var(--duration-fast) var(--ease-elegant);
+}
+.eventRow:hover { border-color: var(--color-border-gold); }
+
+.eventLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+}
+.eventCountdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+.eventDays {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.eventDaysLabel {
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.eventInfo { flex: 1; min-width: 0; }
+.eventName {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eventMeta {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* Progress bar */
+.progressTrack {
+  width: 100%;
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--gradient-gold);
+  transition: width 0.6s var(--ease-elegant);
+}
+
+/* New event button */
+.newEventBtn {
+  display: block;
+  text-align: center;
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border-gold);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--color-gold);
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.newEventBtn:hover { background: rgba(196,164,82,0.06); }
+
+/* ── Status pills ──────────────────────────────────── */
+.statusPill {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.6rem;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.statusConfirmed { background: rgba(111,207,151,0.15); border: 1px solid rgba(111,207,151,0.4); color: #6fcf97; }
+.statusPending   { background: rgba(242,201,76,0.12);  border: 1px solid rgba(242,201,76,0.35); color: #f2c94c; }
+.statusPlanning  { background: rgba(196,164,82,0.12);  border: 1px solid var(--color-border-gold); color: var(--color-gold-light); }
+.statusDraft     { background: rgba(255,255,255,0.04); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.statusEscrow    { background: rgba(86,179,255,0.1);   border: 1px solid rgba(86,179,255,0.3); color: #56b3ff; }
+
+/* ── Bookings list ─────────────────────────────────── */
+.bookingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bookingRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.02);
+  transition: border-color var(--duration-fast) var(--ease-elegant);
+}
+.bookingRow:hover { border-color: var(--color-border-gold); }
+
+.bookingAvatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-gold);
+  background: rgba(196,164,82,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-gold);
+  flex-shrink: 0;
+}
+.bookingInfo { flex: 1; min-width: 0; }
+.bookingProvider {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bookingService {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+.bookingRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+.bookingAmount {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Escrow card ───────────────────────────────────── */
+.escrowCard {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.35rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-gold);
+  background: linear-gradient(135deg, rgba(196,164,82,0.07) 0%, rgba(11,12,16,0) 60%);
+  animation: fadeInUp 0.5s var(--ease-elegant) 0.15s both;
+}
+.escrowIcon {
+  font-size: 2rem;
+  color: var(--color-gold);
+  flex-shrink: 0;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+.escrowText { flex: 1; }
+.escrowTitle {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.3rem;
+}
+.escrowDesc {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+.escrowDesc strong { color: var(--color-gold-light); font-weight: 500; }
+.escrowLink {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--color-gold);
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-elegant);
+  flex-shrink: 0;
+}
+.escrowLink:hover { color: var(--color-gold-light); }
+
+/* ── Quick actions ─────────────────────────────────── */
+.quickGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.quickAction {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.02);
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.quickAction:hover {
+  border-color: var(--color-border-gold);
+  background: rgba(196,164,82,0.05);
+}
+.quickIcon {
+  font-size: 1rem;
+  color: var(--color-gold);
+}
+.quickLabel {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .statsRow { grid-template-columns: repeat(2, 1fr); }
+  .grid { grid-template-columns: 1fr; }
+  .escrowCard { grid-column: 1; }
+}
+@media (max-width: 640px) {
+  .statsRow { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+.btnGold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.5rem;
+  background: var(--gradient-gold);
+  color: #0b0c10;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--duration-fast), transform var(--duration-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btnGold:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.btnGold:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.5rem;
+  background: transparent;
+  color: var(--color-silver-light);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btnGhost:hover:not(:disabled) {
+  border-color: rgba(255,255,255,0.25);
+  color: var(--color-text-primary);
+  transform: translateY(-1px);
+}
+.btnGhost:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Section Title ─────────────────────────────────── */
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+

@@ -1,0 +1,422 @@
+/* Shared base with login — reuse same structure */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  background: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.orb1 {
+  position: absolute;
+  width: 500px; height: 500px;
+  top: -180px; right: -120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,164,82,0.09) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+.orb2 {
+  position: absolute;
+  width: 400px; height: 400px;
+  bottom: -100px; left: -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(192,194,204,0.06) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.backLink {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.75rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-silver-dark);
+  transition: color var(--duration-fast) var(--ease-elegant);
+  z-index: 10;
+}
+.backLink:hover { color: var(--color-gold-light); }
+
+/* ── Card ──────────────────────────────────────────── */
+.card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 460px;
+  padding: 2.5rem 2.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(16, 17, 26, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+  animation: fadeInUp 0.6s var(--ease-elegant) both;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logoArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 1.1rem;
+}
+.logoImg {
+  mix-blend-mode: screen;
+  filter: brightness(1.1);
+  object-fit: contain;
+}
+.brandName {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  background: var(--gradient-silver);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.brandTagline {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+.divider span:first-child,
+.divider span:last-child {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border-gold), transparent);
+}
+.dividerIcon {
+  font-size: 0.5rem;
+  color: var(--color-gold);
+  opacity: 0.7;
+  flex: none;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: 0.35rem;
+  width: 100%;
+}
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+/* ── Role Selector ─────────────────────────────────── */
+.roleSelector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.roleBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-elegant);
+  position: relative;
+  overflow: hidden;
+}
+.roleBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(196,164,82,0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-elegant);
+}
+.roleBtn:hover {
+  border-color: var(--color-border-gold);
+  transform: translateY(-2px);
+}
+.roleBtn:hover::before { opacity: 1; }
+
+.roleActive {
+  border-color: var(--color-gold) !important;
+  background: rgba(196,164,82,0.08) !important;
+  box-shadow: 0 0 20px rgba(196,164,82,0.15);
+}
+.roleActive::before { opacity: 1 !important; }
+
+.roleIcon {
+  font-size: 1.3rem;
+  color: var(--color-gold);
+  line-height: 1;
+}
+.roleLabel {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-text-primary);
+}
+.roleDesc {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
+}
+
+/* ── Form ──────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.label {
+  font-family: var(--font-body);
+  font-size: 0.73rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-silver-dark);
+}
+
+.input {
+  width: 100%;
+  padding: 0.72rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-elegant),
+              box-shadow var(--duration-fast) var(--ease-elegant),
+              background var(--duration-fast) var(--ease-elegant);
+}
+.input::placeholder { color: var(--color-text-muted); }
+.input:focus {
+  border-color: var(--color-gold);
+  background: rgba(196,164,82,0.04);
+  box-shadow: 0 0 0 3px rgba(196,164,82,0.12);
+}
+
+.errorBanner {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(220, 80, 80, 0.4);
+  background: rgba(220, 80, 80, 0.08);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: #f08080;
+}
+
+.terms {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+.termsLink {
+  color: var(--color-gold);
+  transition: color var(--duration-fast) var(--ease-elegant);
+}
+.termsLink:hover { color: var(--color-gold-light); }
+
+.btnPrimary {
+  width: 100%;
+  padding: 0.85rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-gold);
+  color: var(--color-bg);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-elegant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 0.25rem;
+}
+.btnPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(196,164,82,0.35);
+}
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: var(--color-bg);
+  border-radius: 50%;
+  animation: rotateSlow 0.7s linear infinite;
+}
+
+.switchText {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  width: 100%;
+}
+.switchLink {
+  color: var(--color-gold-light);
+  font-weight: 500;
+  transition: color var(--duration-fast) var(--ease-elegant);
+}
+.switchLink:hover { color: var(--color-gold); }
+
+/* ── Password toggle ───────────────────────────────── */
+.passwordWrapper {
+  position: relative;
+  width: 100%;
+}
+.passwordWrapper .input { padding-right: 2.75rem; }
+.eyeBtn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.2rem;
+  color: var(--color-text-muted);
+  transition: color var(--duration-fast) var(--ease-elegant);
+}
+.eyeBtn:hover { color: var(--color-gold); }
+
+/* ── Extended fields ───────────────────────────────── */
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  width: 100%;
+}
+.sectionHeading {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  width: 100%;
+  padding: 0.5rem 0 0.25rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.25rem;
+}
+.chipsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  width: 100%;
+}
+.chip {
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.03);
+  font-family: var(--font-body);
+  font-size: 0.73rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.chip:hover { border-color: var(--color-border-gold); color: var(--color-gold-light); }
+.chipActive {
+  border-color: var(--color-gold) !important;
+  background: rgba(196,164,82,0.12) !important;
+  color: var(--color-gold) !important;
+  font-weight: 600;
+}
+.addressRow {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+.addressRow .input { flex: 1; }
+.addBtn {
+  flex-shrink: 0;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(196,164,82,0.08);
+  color: var(--color-gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-elegant);
+  white-space: nowrap;
+}
+.addBtn:hover { background: rgba(196,164,82,0.18); }
+.addressList { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
+.addressTag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(196,164,82,0.06);
+  border: 1px solid rgba(196,164,82,0.2);
+  font-size: 0.82rem;
+  color: var(--color-text-primary);
+}
+.removeBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 0.25rem;
+  transition: color var(--duration-fast) var(--ease-elegant);
+}
+.removeBtn:hover { color: #f08080; }

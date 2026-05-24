@@ -1,0 +1,285 @@
+/* ── Security Page ──────────────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: var(--gradient-hero);
+  position: relative;
+  overflow: hidden;
+}
+
+.orb1 {
+  position: fixed;
+  top: -200px;
+  left: -200px;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,164,82,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Hero */
+.hero {
+  padding: 7rem 2rem 4rem;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  color: var(--color-text-primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Content */
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+
+/* Escrow flow */
+.escrowSection {
+  margin-bottom: 4rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--color-text-primary);
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+}
+
+.sectionDesc {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.escrowSteps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+@media (max-width: 700px) { .escrowSteps { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 400px) { .escrowSteps { grid-template-columns: 1fr; } }
+
+.escrowStep {
+  background: rgba(255,255,255,0.02);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  transition: background 0.2s;
+}
+.escrowStep:hover { background: rgba(255,255,255,0.04); }
+
+.escrowNum {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: rgba(196,164,82,0.3);
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+
+.escrowIcon {
+  font-size: 1.6rem;
+}
+
+.escrowStepTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.escrowStepDesc {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+/* Trust pillars */
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 4rem;
+}
+
+@media (max-width: 700px) { .pillarsGrid { grid-template-columns: 1fr; } }
+
+.pillarCard {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 1.75rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.pillarCard:hover {
+  border-color: rgba(196,164,82,0.3);
+  transform: translateY(-2px);
+}
+
+.pillarIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.pillarTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.pillarDesc {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* Dispute section */
+.disputeCard {
+  background: rgba(196,164,82,0.04);
+  border: 1px solid rgba(196,164,82,0.2);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 4rem;
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 600px) { .disputeCard { flex-direction: column; } }
+
+.disputeIcon { font-size: 2.5rem; flex-shrink: 0; }
+
+.disputeTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.disputeText {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.disputeSteps {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.disputeStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.disputeStepNum {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(196,164,82,0.15);
+  border: 1px solid rgba(196,164,82,0.3);
+  color: var(--color-gold);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* Trust badges */
+.badgesRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.trustBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+.trustBadgeIcon { font-size: 1.1rem; }
+
+/* CTA */
+.cta {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: rgba(196,164,82,0.04);
+  border: 1px solid rgba(196,164,82,0.15);
+  border-radius: 20px;
+}
+
+.ctaTitle {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--color-text-primary);
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.ctaDesc {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.ctaBtn {
+  display: inline-block;
+  padding: 0.85rem 2.5rem;
+  background: var(--gradient-gold);
+  color: #0b0c10;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s, transform 0.15s;
+  text-decoration: none;
+}
+.ctaBtn:hover { opacity: 0.9; transform: translateY(-1px); }

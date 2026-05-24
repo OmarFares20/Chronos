@@ -1,0 +1,268 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 0.3rem;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+.legendDot {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--color-border);
+}
+.legendBlocked {
+  background: rgba(220,80,80,0.2);
+  border-color: rgba(220,80,80,0.5);
+}
+.legendToday {
+  background: rgba(196,164,82,0.2);
+  border-color: var(--color-gold);
+}
+
+/* Calendar card */
+.calendarCard {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--color-border-gold);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 700px;
+}
+.calNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.monthLabel {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+}
+.navBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 1.2rem;
+  width: 36px; height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.navBtn:hover { border-color: var(--color-gold); color: var(--color-gold); }
+
+/* Grid */
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.dayLabel {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  padding-bottom: 0.5rem;
+}
+.dayEmpty { aspect-ratio: 1; }
+.dayCell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-elegant);
+  position: relative;
+  gap: 2px;
+}
+.dayCell:hover:not(:disabled) {
+  border-color: var(--color-border-gold);
+  background: rgba(196,164,82,0.06);
+}
+.dayNumber {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+.blockedIcon {
+  font-size: 0.55rem;
+  color: rgba(220,80,80,0.8);
+}
+.dayCellBlocked {
+  background: rgba(220,80,80,0.12) !important;
+  border-color: rgba(220,80,80,0.4) !important;
+}
+.dayCellBlocked .dayNumber { color: rgba(220,80,80,0.8); }
+.dayCellToday {
+  border-color: var(--color-gold) !important;
+  background: rgba(196,164,82,0.08) !important;
+}
+.dayCellToday .dayNumber { color: var(--color-gold); font-weight: 700; }
+.dayCellPast {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.dayCellLoading { opacity: 0.5; }
+
+/* Note modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--color-bg-card, rgba(20,21,32,0.98));
+  border: 1px solid var(--color-border-gold);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem;
+  animation: scaleIn 0.25s var(--ease-elegant) both;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.modalTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.4rem;
+}
+.modalDesc {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+.modalTextarea {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-elegant);
+}
+.modalTextarea:focus { border-color: var(--color-gold); }
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+.modalCancel {
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.modalCancel:hover { border-color: var(--color-border-gold); }
+.modalConfirm {
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: rgba(220,80,80,0.85);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.modalConfirm:hover { background: rgba(220,80,80,1); }
+
+/* Blocked list */
+.blockedList { margin-top: 1.5rem; max-width: 700px; }
+.blockedListTitle {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.85rem;
+}
+.blockedItems { display: flex; flex-direction: column; gap: 0.5rem; }
+.blockedItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(220,80,80,0.06);
+  border: 1px solid rgba(220,80,80,0.2);
+}
+.blockedDate {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+.blockedNote {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  flex: 1;
+}
+.unblockBtn {
+  background: none;
+  border: 1px solid rgba(196,164,82,0.4);
+  border-radius: var(--radius-sm);
+  color: var(--color-gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--duration-fast) var(--ease-elegant);
+}
+.unblockBtn:hover { background: rgba(196,164,82,0.1); }
