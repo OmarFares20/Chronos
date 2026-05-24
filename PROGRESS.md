@@ -291,3 +291,12 @@
 - **My Occasions page**: "Mark Received" button in booking rows also calls `PATCH → RELEASED` (customer-only)
 - Event status synced: `RELEASED` booking → event moves to `COMPLETED`
 
+### [x] Fix 2 – Message Alignment in Chat ✅
+- **Root cause**: `.chatMessages` was missing `align-items: flex-start`, so `align-self` on child bubbles had no effect — both sides centered
+- **`.chatMessages`**: added `align-items: flex-start`; tightened gap from `1rem` → `0.5rem`
+- **`.messageBubble`**: added `align-self: flex-start` — other person's messages hug the left
+- **`.messageBubbleSelf`**: `align-self: flex-end` — my messages hug the right
+- **Bubble tail corners**: sent messages get `border-radius: 16px 4px 16px 16px` (tail top-right); received get `4px 16px 16px 16px` (tail top-left) — standard chat UI convention
+- **`.messageBubbleSelf .bubbleContent`**: `align-items: flex-end` so the timestamp sits under the right edge of the sent bubble
+- **Mobile** (`max-width: 768px`): bubbles capped at 85% width; reduced padding
+
