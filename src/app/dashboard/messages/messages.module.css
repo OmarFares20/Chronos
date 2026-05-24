@@ -206,21 +206,23 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  /* Critical: without this, align-self on children doesn't work */
-  align-items: flex-start;
+  /* Full width column — each row controls its own alignment */
+  align-items: stretch;
 }
 
 .messageBubble {
   display: flex;
+  flex-direction: row;
+  justify-content: flex-start; /* received: bubble hugs LEFT */
+  align-items: flex-end;
   gap: 0.75rem;
-  max-width: 72%;
-  align-self: flex-start;   /* other-person: left-aligned */
+  width: 100%;                 /* full row width */
   animation: fadeInUp 0.2s ease;
 }
 
 .messageBubbleSelf {
-  align-self: flex-end;     /* my messages: right-aligned */
-  flex-direction: row-reverse;
+  justify-content: flex-end;   /* sent: bubble hugs RIGHT */
+  flex-direction: row-reverse; /* avatar goes after the bubble */
 }
 
 .bubbleAvatar {
@@ -241,6 +243,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  max-width: 65%;  /* bubble text won't exceed 65% of chat width */
 }
 
 .messageBubbleSelf .bubbleContent {
