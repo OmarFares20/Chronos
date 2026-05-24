@@ -191,7 +191,6 @@ export default async function HomePage() {
                         src={`https://picsum.photos/seed/${pkg.service.provider.businessName.replace(/\s+/g, '')}/56`}
                         alt={pkg.service.provider.businessName}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     </div>
                     <h3 className={styles.serviceTitle}>{pkg.name}</h3>
