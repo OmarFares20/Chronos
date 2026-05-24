@@ -62,15 +62,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Notify the provider
-      await prisma.notification.create({
-        data: {
-          userId:  providerUserId,
-          type:    "MESSAGE",
-          title:   "New Message",
-          message: `${customer?.name || "A customer"} sent you a message.`,
-        },
-      }).catch(() => {}); // non-fatal
+      // Note: notifications are derived from unread messages — no separate model
     }
 
     return NextResponse.json({

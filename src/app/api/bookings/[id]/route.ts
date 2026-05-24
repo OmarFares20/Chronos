@@ -1,3 +1,38 @@
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = requireAuth(req);
+    const { id } = await params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        event:    { select: { name: true, type: true } },
+        provider: { select: { businessName: true, location: true } },
+        customer: { select: { name: true, email: true } },
+        package:  { select: { name: true, duration: true, price: true } },
+        payment:  true,
+      },
+    });
+
+    if (!booking) return NextResponse.json({ error: "Booking not found." }, { status: 404 });
+
+    const isCustomer = booking.customerId === auth.userId;
+    const isProvider = booking.provider && await prisma.providerProfile.findFirst({
+      where: { id: booking.providerId, userId: auth.userId },
+    });
+
+    if (!isCustomer && !isProvider) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    return NextResponse.json({ booking });
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message === "UNAUTHORIZED")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";

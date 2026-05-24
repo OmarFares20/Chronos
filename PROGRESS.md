@@ -222,10 +222,19 @@
 - **Customer insights API**: `totalSpent` and `monthlySpend` now only count paid bookings (`IN_ESCROW` + `RELEASED`)
 - **Re-seed command**: `npx prisma migrate dev --name add-payment && npx prisma db seed`
 
-### [ ] Fix 4 – Restore & Enhance Payment Step with Provider Hold
-- "Proceed to Payment" button in customer booking details after provider confirms
-- Full Egyptian payment method UI (Card, Fawry, Vodafone Cash, Bank Transfer)
-- Booking → `PAID`/`IN_ESCROW` after demo payment; both dashboards update
+### [x] Fix 4 – Restore & Enhance Payment Step with Provider Hold ✅
+- **Dedicated payment page** at `/dashboard/payment/[bookingId]` — fully standalone, not a modal
+- **Business logic guard**: page blocks access if status is not `CONFIRMED` (shows clear message for PENDING, DECLINED, already paid)
+- **4 Egyptian payment methods** with real form fields:
+  - Credit/Debit Card: 16-digit formatter, MM/YY expiry with future-date validation, 3-digit CVC (masked), cardholder name
+  - Fawry / FawryPay: reference number field + step-by-step instructions
+  - Vodafone Cash / InstaPay: wallet number field with +20 prefill + destination number shown
+  - Bank Transfer: CIB IBAN displayed + file upload dropzone for receipt
+- **Processing simulation**: 1.5s loading spinner → success screen with escrow explanation
+- **`POST /api/bookings/[id]/pay`**: validates CONFIRMED status, creates `Payment` record, updates booking to `IN_ESCROW`, atomic transaction
+- **`GET /api/bookings/[id]`**: new handler for the payment page to load booking details
+- **Customer bookings page**: "Pay Now" modal replaced with "Proceed to Payment" link → dedicated page
+- **Booking summary sidebar**: provider, package, date, price breakdown with 5% platform fee shown
 
 ---
 

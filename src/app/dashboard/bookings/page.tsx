@@ -1,10 +1,11 @@
 "use client";
 import styles from "../page.module.css";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import { useToast } from "@/components/Toaster";
 import { humanStatus, statusClass } from "@/lib/ui";
-import { Star, CalendarCheck, CheckCircle, CreditCard, Smartphone, Building2, QrCode } from "lucide-react";
+import { Star, CalendarCheck, CheckCircle } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
 
 function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
@@ -37,13 +38,6 @@ function StarPicker({ value, onChange }: { value: number; onChange: (n: number) 
   );
 }
 
-const PAY_METHODS = [
-  { id: "card", label: "Credit Card", icon: <CreditCard size={18} /> },
-  { id: "fawry", label: "Fawry", icon: <QrCode size={18} /> },
-  { id: "wallet", label: "Vodafone Cash", icon: <Smartphone size={18} /> },
-  { id: "bank", label: "Bank Transfer", icon: <Building2 size={18} /> },
-];
-
 export default function BookingsPage() {
   const { toast } = useToast();
   
@@ -56,9 +50,6 @@ export default function BookingsPage() {
   const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  const [payBooking, setPayBooking] = useState<any | null>(null);
-  const [payMethod, setPayMethod] = useState("card");
-  const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const submitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,31 +73,6 @@ export default function BookingsPage() {
       }
     } finally {
       setSubmittingReview(false);
-    }
-  };
-
-  const submitPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!payBooking) return;
-    setSubmittingPayment(true);
-    try {
-      // Simulate payment delay
-      await new Promise(r => setTimeout(r, 1000));
-      
-      const res = await fetch(`/api/bookings/${payBooking.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "IN_ESCROW" }),
-      });
-      if (res.ok) {
-        toast("Payment successful! Funds are held in escrow.", "success");
-        mutate({ bookings: bookings.map((b: any) => b.id === payBooking.id ? { ...b, status: "IN_ESCROW" } : b) }, false);
-        setPayBooking(null);
-      } else {
-        toast("Payment failed. Please try again.", "error");
-      }
-    } finally {
-      setSubmittingPayment(false);
     }
   };
 
@@ -166,14 +132,14 @@ export default function BookingsPage() {
                 )}
 
                 {b.status === "CONFIRMED" && (
-                  <button
+                  <a
+                    href={`/dashboard/payment/${b.id}`}
                     className={styles.btnGold}
-                    onClick={() => setPayBooking(b)}
-                    style={{ padding: "0.3rem 0.75rem", fontSize: "0.78rem" }}
+                    style={{ padding: "0.3rem 0.75rem", fontSize: "0.78rem", textDecoration: "none" }}
                     id={`pay-btn-${b.id}`}
                   >
-                    Pay Now
-                  </button>
+                    Proceed to Payment
+                  </a>
                 )}
                 
                 {b.status === "COMPLETED" && !b.review && (
@@ -195,73 +161,6 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {/* Payment Modal */}
-      {payBooking && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
-          <form
-            onSubmit={submitPayment}
-            style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "2.5rem", width: "100%", maxWidth: 460, animation: "fadeInUp 0.25s ease" }}
-          >
-            <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "var(--color-text-primary)", marginBottom: "0.25rem", letterSpacing: "0.05em" }}>
-              Secure Payment
-            </h3>
-            <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "1.75rem" }}>
-              {payBooking.provider?.businessName} — {formatPrice(Number(payBooking.amount))}
-            </p>
-
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label style={{ display: "block", fontSize: "0.82rem", color: "var(--color-text-muted)", marginBottom: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Select Payment Method
-              </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                {PAY_METHODS.map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setPayMethod(m.id)}
-                    style={{
-                      padding: "0.75rem",
-                      background: payMethod === m.id ? "rgba(212,175,85,0.15)" : "rgba(0,0,0,0.3)",
-                      border: `1px solid ${payMethod === m.id ? "var(--color-gold)" : "rgba(255,255,255,0.1)"}`,
-                      borderRadius: 8,
-                      color: payMethod === m.id ? "var(--color-gold)" : "var(--color-text-primary)",
-                      display: "flex", alignItems: "center", gap: 8,
-                      fontSize: "0.85rem", cursor: "pointer",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    {m.icon} {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "1.75rem", fontSize: "0.8rem", color: "var(--color-text-muted)", background: "rgba(0,0,0,0.2)", padding: "1rem", borderRadius: 8, border: "1px dashed rgba(255,255,255,0.05)" }}>
-              <p style={{ color: "var(--color-gold)", marginBottom: "0.5rem" }}>🔒 Demo Mode</p>
-              <p>No real charge will be made. Clicking "Confirm Payment" will instantly deposit the funds into escrow.</p>
-            </div>
-
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button
-                type="submit"
-                disabled={submittingPayment}
-                className={styles.btnGold}
-                style={{ flex: 1 }}
-              >
-                {submittingPayment ? "Processing..." : "Confirm Payment"}
-              </button>
-              <button
-                type="button"
-                className={styles.btnGhost}
-                style={{ flex: 1 }}
-                onClick={() => setPayBooking(null)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* Review Modal */}
       {reviewBooking && (
