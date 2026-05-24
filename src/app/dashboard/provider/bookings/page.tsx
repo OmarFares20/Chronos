@@ -153,14 +153,9 @@ export default function ProviderBookingsPage() {
                     </>
                   )}
                   {b.status === "IN_ESCROW" && (
-                    <button
-                      className={styles.btnGold}
-                      onClick={() => setConfirmAction({ id: b.id, status: "RELEASED", label: "Mark this service as delivered? Payment will be released to you." })}
-                      style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}
-                      id={`complete-${b.id}`}
-                    >
-                      Mark Delivered
-                    </button>
+                    <div style={{ fontSize: "0.72rem", color: "#a78bfa", display: "flex", alignItems: "center", gap: 4, padding: "0.3rem 0" }}>
+                      <ShieldCheck size={12} /> Awaiting customer confirmation
+                    </div>
                   )}
                 </div>
               </div>

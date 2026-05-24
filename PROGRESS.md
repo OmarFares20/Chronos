@@ -275,3 +275,19 @@
   - **Loading skeletons**: 3 pulsing placeholder cards
   - SWR with 10s refresh interval for live updates
 
+---
+
+## Role & Messaging Fixes
+
+### [x] Fix 1 – Correct Role for Marking Service as Received ✅
+- **Root cause**: `PATCH /api/bookings/[id]` had stale permission logic that allowed providers to set `RELEASED` and didn't allow customers to set it at all
+- **API fully rewritten** with a clear authorization matrix:
+  - `CONFIRMED` / `DECLINED` → provider only, booking must be `PENDING`
+  - `RELEASED` → **customer only**, booking must be `IN_ESCROW` (escrow release)
+  - `CANCELLED` → customer only, booking must be `PENDING` or `CONFIRMED`
+  - All other transitions rejected with `403`
+- **Provider bookings page**: "Mark Delivered" button removed; replaced with read-only chip "Awaiting customer confirmation" (purple, ShieldCheck icon)
+- **Customer bookings page**: "✓ Mark as Received" button remains, correctly calls `PATCH → RELEASED`
+- **My Occasions page**: "Mark Received" button in booking rows also calls `PATCH → RELEASED` (customer-only)
+- Event status synced: `RELEASED` booking → event moves to `COMPLETED`
+
