@@ -317,3 +317,20 @@
 - **Active row highlighting**: selected dispute row shows gold tint + "Viewing" label
 - **API**: `GET /api/disputes` already returns all disputes for admin with optional `?status=` and `?role=` filters; `PATCH /api/disputes/[id]` already restricted to ADMIN role
 
+### [x] Fix 2 – Comprehensive Dummy Data Seed ✅
+- **Cleanup order fixed**: now deletes `disputeAttachment` and `dispute` before users (FK safe)
+- **10 customers** with Egyptian names and `randomuser.me` portrait photos (Yasmine, Mohamed, Omar, Nour, Salma, Kareem, Aya, Ahmed, Laila, Mahmoud)
+- **15-25 providers** dynamically generated across all service categories with business logos, gallery images (3-6 each), 2-4 package tiers, some with promotion badges
+- **70 bookings** across all statuses:
+  - 25 × `RELEASED` (with Payment + Review)
+  - 12 × `IN_ESCROW` (with Payment)
+  - 12 × `CONFIRMED` (awaiting payment)
+  - 10 × `PENDING` (awaiting provider response)
+  - 7 × `DECLINED`
+  - 4 × `CANCELLED`
+  - Spread across 6 months for meaningful Insights charts
+- **5 conversations** (5-8 messages each) between customers and providers, scripted realistically; last message in each thread marked unread for badge counts
+- **Reviews** on all RELEASED bookings (ratings 3-5, varied Egyptian-context comments)
+- **5 disputes** covering all statuses (OPEN, IN_PROGRESS, RESOLVED ×2, CLOSED), filed by both customers and providers, all with 2 picsum placeholder attachments, 2 with admin responses
+- **Re-seed command**: `npx prisma db seed`
+

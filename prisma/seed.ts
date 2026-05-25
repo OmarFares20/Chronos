@@ -163,7 +163,10 @@ const CATEGORY_TEMPLATES: Record<string, { prefix: string[], suffix: string[], p
 const CATEGORIES = Object.keys(CATEGORY_TEMPLATES) as ServiceCategory[];
 
 async function main() {
-  console.log("Cleaning up existing data...");
+  console.log("🧹 Cleaning up existing data...");
+  await prisma.disputeAttachment.deleteMany();
+  await prisma.dispute.deleteMany();
+  await prisma.payment.deleteMany();
   await prisma.review.deleteMany();
   await prisma.message.deleteMany();
   await prisma.booking.deleteMany();
@@ -174,14 +177,13 @@ async function main() {
   await prisma.providerAvailability.deleteMany();
   await prisma.providerProfile.deleteMany();
   await prisma.user.deleteMany();
-
-  console.log("Seeding database...");
+  console.log("✓ Cleaned.");
 
   const providerPassword = await bcrypt.hash("Provider@123!", 10);
   const customerPassword = await bcrypt.hash("Customer@123!", 10);
   const adminPassword    = await bcrypt.hash("Admin@123!", 10);
 
-  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  // ── ADMIN ──────────────────────────────────────────────────────────────────
   await prisma.user.create({
     data: {
       name: "System Admin",
@@ -191,42 +193,50 @@ async function main() {
       avatarUrl: businessAvatar("Chronos Admin"),
     },
   });
+  console.log("✓ Admin created.");
 
-  // ── CUSTOMERS ─────────────────────────────────────────────────────────────
-  const customersData = [
-    { name: "Yasmine El-Sayed", email: "yasmine@example.com", avatar: businessAvatar("YE", "2d1b4e", "C4A452") },
-    { name: "Mohamed Youssef", email: "mohamed@example.com", avatar: businessAvatar("MY", "1a2d1b", "C4A452") },
-    { name: "Omar Hassan", email: "omar@example.com", avatar: businessAvatar("OH", "1b1a2d", "C4A452") },
+  // ── 10 CUSTOMERS (Egyptian names) ──────────────────────────────────────────
+  const CUSTOMERS_DATA = [
+    { name: "Yasmine El-Sayed",   email: "yasmine@example.com",  gender: "women", n: 22 },
+    { name: "Mohamed Youssef",    email: "mohamed@example.com",  gender: "men",   n: 33 },
+    { name: "Omar Hassan",        email: "omar@example.com",     gender: "men",   n: 15 },
+    { name: "Nour Ibrahim",       email: "nour@example.com",     gender: "women", n: 44 },
+    { name: "Salma Fouad",        email: "salma@example.com",    gender: "women", n: 55 },
+    { name: "Kareem Mansour",     email: "kareem@example.com",   gender: "men",   n: 12 },
+    { name: "Aya Tawfik",         email: "aya@example.com",      gender: "women", n: 67 },
+    { name: "Ahmed Zaki",         email: "ahmed@example.com",    gender: "men",   n: 41 },
+    { name: "Laila Osman",        email: "laila@example.com",    gender: "women", n: 31 },
+    { name: "Mahmoud El-Masry",   email: "mahmoud@example.com",  gender: "men",   n: 52 },
   ];
 
-  for (const c of customersData) {
-    await prisma.user.create({
+  const createdCustomers: { id: string; name: string }[] = [];
+  for (const c of CUSTOMERS_DATA) {
+    const u = await prisma.user.create({
       data: {
-        name: c.name,
-        email: c.email,
-        password: customerPassword,
-        role: "CUSTOMER",
-        avatarUrl: c.avatar,
+        name:      c.name,
+        email:     c.email,
+        password:  customerPassword,
+        role:      "CUSTOMER",
+        avatarUrl: `https://randomuser.me/api/portraits/${c.gender}/${c.n}.jpg`,
       },
     });
+    createdCustomers.push({ id: u.id, name: u.name });
   }
+  console.log(`✓ ${createdCustomers.length} customers created.`);
 
-  // ── DYNAMIC PROVIDERS ──────────────────────────────────────────────────────
+  // ── PROVIDERS (dynamic — kept from original) ───────────────────────────────
   console.log(`Generating providers across ${CATEGORIES.length} categories...`);
-
   let providerCount = 0;
 
   for (const category of CATEGORIES) {
     const tpl = CATEGORY_TEMPLATES[category];
-    
-    // Generate 5 providers for each category
-    for (let i = 1; i <= 5; i++) {
-      providerCount++;
+    if (!tpl) continue;
+    const count = randomInt(3, 5);
+
+    for (let i = 0; i < count; i++) {
       const isPerson = Math.random() > 0.5;
-      
       let businessName = "";
-      let avatarUrl = "";
-      
+
       if (isPerson) {
         const isMale = Math.random() > 0.5;
         const firstName = isMale ? randomItem(FIRST_NAMES_MALE) : randomItem(FIRST_NAMES_FEMALE);
@@ -235,112 +245,99 @@ async function main() {
         const prefix = Math.random() > 0.3 ? randomItem(ADJECTIVES) : randomItem(tpl.prefix);
         businessName = `${prefix} ${randomItem(tpl.suffix)}`;
       }
-      // Always use business-appropriate logo (no human faces)
-      avatarUrl = businessAvatar(businessName);
+      const avatarUrl = businessAvatar(businessName);
 
-      // 1 service per provider (to simplify and ensure exactly 3 tiered packages)
-      const serviceData = Array.from({ length: 1 }).map((_, sIdx) => {
-        
-        // 3 Tiers
-        const tiers = ["Essential", "Signature", "Prestige"];
-        const hasPromotion = Math.random() > 0.5; // 50% chance of promotion on this provider
-        const promotionTier = randomInt(0, 2); // Which tier gets the promo?
+      const isVerified  = Math.random() > 0.35;
+      const isTopRated  = Math.random() > 0.65;
+      const hasPromo    = Math.random() > 0.75;
+      const badge       = isTopRated ? "Top Rated" : Math.random() > 0.7 ? "Premium" : null;
+      const location    = randomItem(LOCATIONS);
+      const bio         = randomItem(tpl.bio);
+      const rating      = Math.round((3.5 + Math.random() * 1.5) * 10) / 10;
+      const reviewCount = randomInt(5, 120);
+      const minPrice    = randomInt(1500, 5000);
+      const provEmail   = `${businessName.toLowerCase().replace(/\s+/g, ".").replace(/[^a-z.]/g, "").slice(0, 20)}@chronos-provider.com`;
 
-        const packageData = tiers.map((tierName, pIdx) => {
-          const isPromo = hasPromotion && pIdx === promotionTier;
-          const discountPercentage = isPromo ? randomItem([10, 15, 20, 25, 30]) : null;
-
-          // Price scales with tier
-          const basePrice = randomInt(1500, 5000) * (pIdx + 1) * (pIdx === 2 ? 1.5 : 1);
-          
-          return {
-            name: `${tierName} ${randomItem(tpl.pkgNames)}`,
-            description: `Comprehensive ${tierName.toLowerCase()} package tailored for your occasion including ${randomItem(tpl.pkgFeatures).toLowerCase()}.`,
-            price: Math.floor(basePrice),
-            duration: `${randomInt(2 + pIdx * 2, 4 + pIdx * 2)} Hours`,
-            isHighlight: pIdx === 1, // Make Signature the highlight
-            features: randomItems(tpl.pkgFeatures, randomInt(3, 5 + pIdx)),
-            isPromotion: isPromo,
-            discountPercentage: discountPercentage
-          };
-        });
-
-        return {
-          name: `${businessName} Service`,
-          category: category,
-          packages: { create: packageData }
-        };
-      });
-
-      const user = await prisma.user.create({
+      const provUser = await prisma.user.create({
         data: {
-          name: businessName,
-          email: `provider${providerCount}@chronos.com`,
-          password: providerPassword,
-          role: "PROVIDER",
-          avatarUrl: avatarUrl,
+          name:      businessName,
+          email:     provEmail,
+          password:  providerPassword,
+          role:      "PROVIDER",
+          avatarUrl,
         },
       });
 
-      const galleryData = Array.from({ length: randomInt(3, 8) }).map((_, gIdx) => ({
-        imageUrl: gallery(category.toLowerCase(), providerCount * 10 + gIdx),
-        label: `${category} showcase ${gIdx + 1}`,
-        aspect: randomItem(["landscape", "portrait", "square"])
-      }));
+      const packages: { name: string; price: number; features: string[] }[] = [];
+      const numPackages = randomInt(2, 4);
+      for (let p = 0; p < numPackages; p++) {
+        const pkgFeatureCount = randomInt(3, 6);
+        packages.push({
+          name:     randomItem(tpl.pkgNames),
+          price:    minPrice * (p + 1) + randomInt(0, 500),
+          features: randomItems(tpl.pkgFeatures, pkgFeatureCount),
+        });
+      }
 
       await prisma.providerProfile.create({
         data: {
-          userId: user.id,
-          businessName: businessName,
-          bio: randomItem(tpl.bio),
-          location: randomItem(LOCATIONS),
-          since: randomInt(2005, 2024),
-          responseTime: randomItem(["within an hour", "within a few hours", "within a day"]),
-          isVerified: Math.random() > 0.2,
-          badge: Math.random() > 0.7 ? "Top Rated" : null,
-          services: { create: serviceData },
-          galleryItems: { create: galleryData },
+          userId:        provUser.id,
+          businessName,
+          bio,
+          location,
+          avatarUrl,
+          isVerified,
+          badge,
+          rating,
+          reviewCount,
+          minPrice,
+          categories:    [category as never],
+          socialLinks:   {},
+          applicationStatus: "APPROVED",
+          services: {
+            create: [{
+              name:        `${businessName} — ${category.replace("_", " ")}`,
+              category:    category as never,
+              description: bio,
+              isActive:    true,
+              packages: {
+                create: packages.map((pkg, pi) => ({
+                  name:          pkg.name,
+                  price:         pkg.price,
+                  currency:      "EGP",
+                  features:      pkg.features,
+                  isHighlight:   pi === 1,
+                  isPromotion:   hasPromo && pi === 0,
+                  discountPercentage: hasPromo && pi === 0 ? randomInt(10, 30) : null,
+                  originalPrice:     hasPromo && pi === 0 ? Math.round(pkg.price * 1.25) : null,
+                })),
+              },
+            }],
+          },
+          gallery: {
+            create: Array.from({ length: randomInt(3, 6) }, (_, gi) => ({
+              url:      gallery(category.toLowerCase(), providerCount * 10 + gi),
+              caption:  `${businessName} portfolio shot ${gi + 1}`,
+              category: category as never,
+            })),
+          },
         },
       });
+
+      providerCount++;
     }
   }
+  console.log(`✓ ${providerCount} providers seeded.`);
 
-  console.log(`Seeded ${providerCount} dynamic providers across all categories successfully.`);
-
-  // ── REALISTIC TRANSACTIONS ────────────────────────────────────────────────
-  console.log("Seeding realistic transactions for Insights...");
-
-  // Fetch all created customers and providers
+  // ── FETCH SEEDED DATA ──────────────────────────────────────────────────────
   const customers = await prisma.user.findMany({ where: { role: "CUSTOMER" } });
   const providers = await prisma.providerProfile.findMany({
-    include: { services: { include: { packages: true } } },
+    include: { services: { include: { packages: true } }, user: { select: { id: true } } },
   });
-
-  // Filter providers that have packages
   const providersWithPkgs = providers.filter(p => p.services.some(s => s.packages.length > 0));
 
   const PAYMENT_METHODS: PaymentMethod[] = ["CARD", "FAWRY", "VODAFONE_CASH", "INSTAPAY", "BANK_TRANSFER"];
 
-  // Booking status distribution: ~40% RELEASED, 20% IN_ESCROW, 15% CONFIRMED, 15% DECLINED, 10% PENDING
-  const STATUS_WEIGHTS: { status: BookingStatus; weight: number }[] = [
-    { status: "RELEASED",  weight: 40 },
-    { status: "IN_ESCROW", weight: 20 },
-    { status: "CONFIRMED", weight: 15 },
-    { status: "DECLINED",  weight: 15 },
-    { status: "PENDING",   weight: 10 },
-  ];
-
-  function pickStatus(): BookingStatus {
-    const total = STATUS_WEIGHTS.reduce((s, w) => s + w.weight, 0);
-    let rand = Math.random() * total;
-    for (const { status, weight } of STATUS_WEIGHTS) {
-      rand -= weight;
-      if (rand <= 0) return status;
-    }
-    return "RELEASED";
-  }
-
-  // Generate a date in the past N months
   function pastDate(monthsBack: number, daysVariance = 28): Date {
     const d = new Date();
     d.setMonth(d.getMonth() - monthsBack);
@@ -348,59 +345,87 @@ async function main() {
     return d;
   }
 
-  let bookingCount = 0;
+  const EVENT_NAMES  = ["Farah El-Sayed", "Corporate Gala", "Eid Celebration", "Birthday Hafla", "Graduation Night", "Engagement Party", "Nile Cruise Dinner", "Company Retreat", "Charity Gala", "Anniversary Night"];
+  const EVENT_TYPES  = ["wedding", "corporate", "birthday", "engagement", "graduation", "celebration", "cruise", "retreat", "charity", "anniversary"];
+  const REVIEW_COMMENTS = [
+    "Absolutely stunning! Exceeded every expectation we had.",
+    "Professional, punctual, and delivered exactly what was promised.",
+    "Our guests were completely blown away. Cannot recommend enough!",
+    "Beautiful work — very attentive to every detail.",
+    "Would book again without a second thought. 5 stars all the way!",
+    "A truly magical experience from start to finish.",
+    "Very responsive and the final result was breathtaking.",
+    "Great value for the quality delivered. Highly satisfied.",
+    "The team was amazing and made our day so special.",
+    "Everything was perfect — thank you for making it unforgettable.",
+    "Decent service but a few small hiccups. Would still recommend.",
+    "Good quality but arrived a bit late. Overall satisfactory.",
+  ];
 
-  // Create 60 bookings spread across 6 months for chart coverage
-  for (let i = 0; i < 60; i++) {
-    const customer   = randomItem(customers);
-    const provider   = randomItem(providersWithPkgs);
+  // ── 70 BOOKINGS across all statuses ────────────────────────────────────────
+  // Status distribution: RELEASED×25, IN_ESCROW×12, CONFIRMED×12, PENDING×10, DECLINED×7, CANCELLED×4
+  const STATUS_PLAN: BookingStatus[] = [
+    ...Array(25).fill("RELEASED"),
+    ...Array(12).fill("IN_ESCROW"),
+    ...Array(12).fill("CONFIRMED"),
+    ...Array(10).fill("PENDING"),
+    ...Array(7).fill("DECLINED"),
+    ...Array(4).fill("CANCELLED"),
+  ];
+
+  let bookingCount = 0;
+  const bookingsForMessages: { bookingId: string; customerId: string; providerUserId: string }[] = [];
+
+  for (let i = 0; i < STATUS_PLAN.length; i++) {
+    const status     = STATUS_PLAN[i];
+    const customer   = customers[i % customers.length];
+    const provider   = providersWithPkgs[i % providersWithPkgs.length];
     const service    = randomItem(provider.services.filter(s => s.packages.length > 0));
     const pkg        = randomItem(service.packages);
-    const status     = pickStatus();
-    const monthsBack = Math.floor(i / 10); // ~10 bookings per month for 6 months
+    const monthsBack = Math.floor(i / 12);
     const eventDate  = pastDate(monthsBack);
-    const createdAt  = new Date(eventDate.getTime() - randomInt(3, 30) * 86400000); // booked before event
+    const createdAt  = new Date(eventDate.getTime() - randomInt(3, 30) * 86400000);
+    const nameIdx    = i % EVENT_NAMES.length;
 
-    // Create occasion/event
     const event = await prisma.event.create({
       data: {
         customerId: customer.id,
-        name: randomItem(["Wedding Farah", "Corporate Gala", "Eid Celebration", "Birthday Hafla", "Graduation Party", "Engagement Night"]),
-        type: randomItem(["wedding", "corporate", "birthday", "engagement", "graduation", "celebration"]),
-        date: eventDate,
-        location: randomItem(LOCATIONS),
+        name:       EVENT_NAMES[nameIdx],
+        type:       EVENT_TYPES[nameIdx],
+        date:       eventDate,
+        location:   randomItem(LOCATIONS),
         guestCount: randomInt(50, 500),
-        budget: randomInt(10000, 100000),
-        status: status === "RELEASED" ? "COMPLETED" : status === "DECLINED" ? "CANCELLED" : "CONFIRMED",
+        budget:     randomInt(15000, 150000),
+        status:     status === "RELEASED" ? "COMPLETED" : status === "DECLINED" || status === "CANCELLED" ? "CANCELLED" : "CONFIRMED",
         createdAt,
-        updatedAt: createdAt,
+        updatedAt:  createdAt,
       },
     });
 
-    const amount        = Number(pkg.price);
-    const platformFee   = Math.round(amount * 0.05);
+    const amount         = Number(pkg.price);
+    const platformFee    = Math.round(amount * 0.05);
     const providerPayout = amount - platformFee;
 
     const booking = await prisma.booking.create({
       data: {
-        eventId:       event.id,
-        customerId:    customer.id,
-        providerId:    provider.id,
-        packageId:     pkg.id,
+        eventId:          event.id,
+        customerId:       customer.id,
+        providerId:       provider.id,
+        packageId:        pkg.id,
         status,
         amount,
         platformFee,
         providerPayout,
         eventDate,
-        scheduledTime: eventDate,
-        message:       "Looking forward to working with you!",
-        escrowReleasedAt: status === "RELEASED" ? new Date(eventDate.getTime() + 3 * 86400000) : null,
+        scheduledTime:    eventDate,
+        message:          randomItem(["Looking forward to working with you!", "Can we discuss the details?", "Please confirm availability.", "Excited to have you at our event!", "Hope we can finalize soon."]),
+        escrowReleasedAt: status === "RELEASED" ? new Date(eventDate.getTime() + randomInt(2, 5) * 86400000) : null,
         createdAt,
-        updatedAt: createdAt,
+        updatedAt:        createdAt,
       },
     });
 
-    // Create Payment record for paid bookings
+    // Payment for paid bookings
     if (status === "RELEASED" || status === "IN_ESCROW") {
       await prisma.payment.create({
         data: {
@@ -416,34 +441,190 @@ async function main() {
       });
     }
 
-    // Create review for released bookings
+    // Review for released bookings
     if (status === "RELEASED") {
-      const rating = randomItem([4, 4, 4, 5, 5, 5, 5, 3]);
+      const rating = randomItem([3, 4, 4, 4, 5, 5, 5, 5]);
       await prisma.review.create({
         data: {
-          bookingId:  booking.id,
-          customerId: customer.id,
-          providerId: provider.id,
+          bookingId:    booking.id,
+          customerId:   customer.id,
+          providerId:   provider.id,
           rating,
-          comment: randomItem([
-            "Absolutely fantastic service! Exceeded all expectations.",
-            "Professional, punctual, and delivered exactly what was promised.",
-            "Our guests were blown away. Highly recommend!",
-            "Great quality and very attentive to our needs.",
-            "Would book again without hesitation. 5 stars!",
-            "Wonderful experience from start to finish.",
-            "Very responsive and the final result was stunning.",
-          ]),
-          helpfulCount: randomInt(0, 20),
-          createdAt: new Date(eventDate.getTime() + randomInt(3, 14) * 86400000),
+          comment:      randomItem(REVIEW_COMMENTS),
+          helpfulCount: randomInt(0, 25),
+          createdAt:    new Date(eventDate.getTime() + randomInt(3, 14) * 86400000),
         },
-      }).catch(() => {}); // booking may already have a review — skip
+      }).catch(() => {});
+    }
+
+    // Collect some bookings for message threads
+    if (["RELEASED", "IN_ESCROW", "CONFIRMED"].includes(status) && bookingsForMessages.length < 8) {
+      bookingsForMessages.push({
+        bookingId:     booking.id,
+        customerId:    customer.id,
+        providerUserId: provider.user.id,
+      });
     }
 
     bookingCount++;
   }
+  console.log(`✓ ${bookingCount} bookings seeded (with payments & reviews).`);
 
-  console.log(`✓ Seeded ${bookingCount} transactions (bookings + payments + reviews).`);
+  // ── MESSAGES (conversations for 8 booking pairs) ───────────────────────────
+  const MESSAGE_SCRIPTS = [
+    [
+      { from: "customer", text: "Hi! I'd like to learn more about your services." },
+      { from: "provider", text: "Of course! Welcome. What occasion are you planning?" },
+      { from: "customer", text: "We're planning a wedding reception for around 200 guests." },
+      { from: "provider", text: "Wonderful! We specialize in exactly that. Which date do you have in mind?" },
+      { from: "customer", text: "We're looking at sometime in October or November." },
+      { from: "provider", text: "We have availability in both months. Would you like to schedule a call to discuss details?" },
+      { from: "customer", text: "Yes, that would be perfect! What's your process?" },
+      { from: "provider", text: "We start with a consultation, then send a custom proposal within 48 hours." },
+    ],
+    [
+      { from: "customer", text: "Good morning! I saw your portfolio and I'm very impressed." },
+      { from: "provider", text: "Thank you so much! Which package caught your attention?" },
+      { from: "customer", text: "The full coverage package looks great. What's included exactly?" },
+      { from: "provider", text: "It includes 2 photographers, drone footage, a printed album, and a digital gallery." },
+      { from: "customer", text: "Perfect. Can we customize it a bit?" },
+      { from: "provider", text: "Absolutely, all our packages can be tailored to your needs." },
+    ],
+    [
+      { from: "customer", text: "Hello, can you accommodate 300 guests for catering?" },
+      { from: "provider", text: "Yes we can! We've handled events up to 500 guests." },
+      { from: "customer", text: "Amazing. What's your most popular menu?" },
+      { from: "provider", text: "Our VIP Mashweyat Buffet is always a hit at weddings." },
+      { from: "customer", text: "Sounds delicious. Can we do a tasting session?" },
+      { from: "provider", text: "Of course! We schedule complimentary tastings every Saturday." },
+      { from: "customer", text: "This Saturday works for us!" },
+    ],
+    [
+      { from: "customer", text: "Hi, we're interested in your decor services for our engagement." },
+      { from: "provider", text: "Congratulations on your engagement! Let's make it magical." },
+      { from: "customer", text: "We're going for an oriental theme with lots of flowers." },
+      { from: "provider", text: "Beautiful choice. We have stunning arabesque and floral setups." },
+      { from: "customer", text: "Do you also handle lighting?" },
+      { from: "provider", text: "Yes — our Sahra Lighting package is perfect for evening events." },
+    ],
+    [
+      { from: "customer", text: "Are you available for a corporate event next month?" },
+      { from: "provider", text: "Let me check our calendar... Yes, we have openings in the last two weeks." },
+      { from: "customer", text: "Great. It's a formal gala dinner for about 150 people." },
+      { from: "provider", text: "We handle corporate galas regularly. Professional setup guaranteed." },
+      { from: "customer", text: "Excellent. Please send your proposal when ready." },
+      { from: "provider", text: "I'll have a detailed proposal in your inbox by tomorrow morning." },
+    ],
+  ];
+
+  let msgCount = 0;
+  for (let i = 0; i < bookingsForMessages.length && i < MESSAGE_SCRIPTS.length; i++) {
+    const { customerId, providerUserId } = bookingsForMessages[i];
+    const script = MESSAGE_SCRIPTS[i % MESSAGE_SCRIPTS.length];
+
+    for (let j = 0; j < script.length; j++) {
+      const line      = script[j];
+      const senderId  = line.from === "customer" ? customerId : providerUserId;
+      const recvId    = line.from === "customer" ? providerUserId : customerId;
+      const sentAt    = new Date(Date.now() - (script.length - j) * randomInt(3, 15) * 60000);
+      const isUnread  = j === script.length - 1; // last message unread
+
+      await prisma.message.create({
+        data: {
+          senderId:   senderId,
+          receiverId: recvId,
+          content:    line.text,
+          isRead:     !isUnread,
+          createdAt:  sentAt,
+          updatedAt:  sentAt,
+        },
+      });
+      msgCount++;
+    }
+  }
+  console.log(`✓ ${msgCount} messages seeded across ${Math.min(bookingsForMessages.length, MESSAGE_SCRIPTS.length)} conversations.`);
+
+  // ── DISPUTES (5 disputes with varied statuses) ─────────────────────────────
+  const DISPUTE_DATA = [
+    {
+      title:       "Provider did not show up on event day",
+      description: "We booked a photography team for our wedding on October 15th. Despite full payment being held in escrow, the photographer did not arrive at the venue. We had to hire a last-minute replacement at great expense. We are requesting a full refund and compensation for the inconvenience caused.",
+      status:      "OPEN",
+      creatorIdx:  0, // customer index
+      role:        "CUSTOMER",
+      adminResponse: null,
+    },
+    {
+      title:       "Customer is refusing to release payment after service",
+      description: "We successfully completed the full catering service for the client's event on September 22nd. All 250 guests were served, the food quality was exceptional, and we received compliments on the day. However, the customer has not released the escrow payment despite multiple follow-ups. It has been 3 weeks since the event.",
+      status:      "IN_PROGRESS",
+      creatorIdx:  2, // provider index
+      role:        "PROVIDER",
+      adminResponse: "We have contacted the customer and are reviewing the evidence from both parties. A resolution is expected within 5 business days.",
+    },
+    {
+      title:       "Decor quality was significantly below what was agreed",
+      description: "The decor package we purchased included a custom Kosha, arabesque lanterns, and full floral arrangements. On the day, only a basic backdrop was set up with minimal flowers. The Kosha was a standard rental piece, nothing like the custom design shown in the portfolio. We paid EGP 45,000 for a service worth far less.",
+      status:      "RESOLVED",
+      creatorIdx:  1,
+      role:        "CUSTOMER",
+      adminResponse: "After reviewing the contract and photos submitted by both parties, we have determined that the service delivered did not match the agreed specifications. A partial refund of EGP 15,000 has been processed. The provider has been issued a formal warning.",
+    },
+    {
+      title:       "Incorrect billing — charged twice for the same booking",
+      description: "My account was charged twice for the same booking. I see two Payment entries for Booking #A3F291. The second charge appeared 3 days after the first. Please reverse the duplicate charge immediately.",
+      status:      "RESOLVED",
+      creatorIdx:  3,
+      role:        "CUSTOMER",
+      adminResponse: "We have investigated and confirmed the duplicate charge. The second payment has been reversed. Please allow 3-5 business days for the refund to appear.",
+    },
+    {
+      title:       "Customer left a false negative review",
+      description: "A customer who booked our photography service left a 1-star review claiming we were unprofessional. We have video evidence and testimonials from other guests at the same event showing our team was courteous and professional throughout. The review appears to be malicious and is severely harming our business.",
+      status:      "CLOSED",
+      creatorIdx:  4, // provider index
+      role:        "PROVIDER",
+      adminResponse: "We reviewed the evidence submitted by the provider and the customer's account history. The review has been flagged and removed from the platform as it violates our content guidelines. The customer has been warned.",
+    },
+  ];
+
+  for (const d of DISPUTE_DATA) {
+    const creator = d.role === "CUSTOMER"
+      ? createdCustomers[d.creatorIdx]
+      : { id: providers[d.creatorIdx].user.id, name: providers[d.creatorIdx].businessName };
+
+    await prisma.dispute.create({
+      data: {
+        title:         d.title,
+        description:   d.description,
+        status:        d.status as never,
+        creatorId:     creator.id,
+        creatorRole:   d.role as never,
+        adminResponse: d.adminResponse,
+        resolvedAt:    ["RESOLVED", "CLOSED"].includes(d.status) ? new Date(Date.now() - randomInt(1, 14) * 86400000) : null,
+        attachments: {
+          create: [
+            {
+              filePath: `https://picsum.photos/seed/dispute-${d.creatorIdx}-a/400/300`,
+              fileName: "evidence_photo_1.jpg",
+              fileSize: randomInt(200000, 800000),
+            },
+            {
+              filePath: `https://picsum.photos/seed/dispute-${d.creatorIdx}-b/400/300`,
+              fileName: "evidence_photo_2.jpg",
+              fileSize: randomInt(200000, 800000),
+            },
+          ],
+        },
+      },
+    });
+  }
+  console.log(`✓ ${DISPUTE_DATA.length} disputes seeded.`);
+
+  console.log("\n🎉 Database fully seeded!");
+  console.log("   Admin:     admin@chronos.com   / Admin@123!");
+  console.log("   Customer:  yasmine@example.com / Customer@123!");
+  console.log("   Provider:  (see DB for emails)  / Provider@123!");
 }
 
 main()
