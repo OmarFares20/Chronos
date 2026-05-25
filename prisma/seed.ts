@@ -301,18 +301,13 @@ async function main() {
           avatarUrl,
           isVerified,
           badge,
-          rating,
-          reviewCount,
-          minPrice,
           categories:    [category as never],
-          socialLinks:   {},
-          applicationStatus: "APPROVED",
+          socialLinks:   null,
           services: {
             create: [{
               name:        `${businessName} — ${category.replace("_", " ")}`,
               category:    category as never,
               description: bio,
-              isActive:    true,
               packages: {
                 create: packages.map((pkg, pi) => ({
                   name:          pkg.name,
@@ -322,16 +317,15 @@ async function main() {
                   isHighlight:   pi === 1,
                   isPromotion:   hasPromo && pi === 0,
                   discountPercentage: hasPromo && pi === 0 ? randomInt(10, 30) : null,
-                  originalPrice:     hasPromo && pi === 0 ? Math.round(pkg.price * 1.25) : null,
                 })),
               },
             }],
           },
-          gallery: {
+          galleryItems: {
             create: Array.from({ length: randomInt(3, 6) }, (_, gi) => ({
-              url:      gallery(category.toLowerCase(), providerCount * 10 + gi),
-              caption:  `${businessName} portfolio shot ${gi + 1}`,
-              category: category as never,
+              imageUrl:  gallery(category.toLowerCase(), providerCount * 10 + gi),
+              label:     `${businessName} portfolio shot ${gi + 1}`,
+              sortOrder: gi,
             })),
           },
         },
@@ -411,7 +405,6 @@ async function main() {
         budget:     randomInt(15000, 150000),
         status:     status === "RELEASED" ? "COMPLETED" : status === "DECLINED" || status === "CANCELLED" ? "CANCELLED" : "CONFIRMED",
         createdAt,
-        updatedAt:  createdAt,
       },
     });
 
@@ -434,7 +427,6 @@ async function main() {
         message:          randomItem(["Looking forward to working with you!", "Can we discuss the details?", "Please confirm availability.", "Excited to have you at our event!", "Hope we can finalize soon."]),
         escrowReleasedAt: status === "RELEASED" ? new Date(eventDate.getTime() + randomInt(2, 5) * 86400000) : null,
         createdAt,
-        updatedAt:        createdAt,
       },
     });
 
@@ -495,9 +487,18 @@ async function main() {
     });
     const avg   = agg._avg.rating  ? Math.round(agg._avg.rating * 10) / 10 : 0;
     const count = agg._count.rating || 0;
+    // Compute minPrice from packages
+    const packages = await prisma.package.findMany({
+      where: { service: { providerId: pid } },
+      select: { price: true },
+      orderBy: { price: "asc" },
+      take: 1,
+    });
+    const minPriceVal = packages.length > 0 ? Number(packages[0].price) : 0;
+
     await prisma.providerProfile.update({
       where: { id: pid },
-      data:  { rating: avg, reviewCount: count },
+      data:  { rating: avg, reviewCount: count, minPrice: minPriceVal, applicationStatus: "APPROVED" },
     });
     ratingUpdates++;
   }
@@ -569,7 +570,6 @@ async function main() {
           content:    line.text,
           isRead:     !isUnread,
           createdAt:  sentAt,
-          updatedAt:  sentAt,
         },
       });
       msgCount++;
@@ -583,84 +583,80 @@ async function main() {
       title:       "Provider did not show up on event day",
       description: "We booked a photography team for our wedding on October 15th. Despite full payment being held in escrow, the photographer did not arrive at the venue. We had to hire a last-minute replacement at great expense. We are requesting a full refund and compensation for the inconvenience caused.",
       status:      "OPEN",
-      creatorIdx:  0, // customer index
+      creatorIdx:  0,
       role:        "CUSTOMER",
       adminResponse: null,
     },
     {
       title:       "Customer is refusing to release payment after service",
-      description: "We successfully completed the full catering service for the client's event on September 22nd. All 250 guests were served, the food quality was exceptional, and we received compliments on the day. However, the customer has not released the escrow payment despite multiple follow-ups. It has been 3 weeks since the event.",
+      description: "We successfully completed the full catering service for the client event on September 22nd. All 250 guests were served and the food quality was exceptional. However, the customer has not released the escrow payment despite multiple follow-ups. It has been 3 weeks since the event.",
       status:      "IN_PROGRESS",
-      creatorIdx:  2, // provider index
+      creatorIdx:  2,
       role:        "PROVIDER",
-      adminResponse: "We have contacted the customer and are reviewing the evidence from both parties. A resolution is expected within 5 business days.",
+      adminResponse: "We have contacted the customer and are reviewing evidence from both parties. A resolution is expected within 5 business days.",
     },
     {
       title:       "Decor quality was significantly below what was agreed",
-      description: "The decor package we purchased included a custom Kosha, arabesque lanterns, and full floral arrangements. On the day, only a basic backdrop was set up with minimal flowers. The Kosha was a standard rental piece, nothing like the custom design shown in the portfolio. We paid EGP 45,000 for a service worth far less.",
+      description: "The decor package included a custom Kosha, arabesque lanterns, and full floral arrangements. On the day, only a basic backdrop was set up with minimal flowers. The Kosha was a standard rental piece, nothing like the custom design shown in the portfolio. We paid EGP 45,000 for a service worth far less.",
       status:      "RESOLVED",
       creatorIdx:  1,
       role:        "CUSTOMER",
-      adminResponse: "After reviewing the contract and photos submitted by both parties, we have determined that the service delivered did not match the agreed specifications. A partial refund of EGP 15,000 has been processed. The provider has been issued a formal warning.",
+      adminResponse: "After reviewing the contract and photos submitted by both parties, we determined the service delivered did not match agreed specifications. A partial refund of EGP 15,000 has been processed.",
     },
     {
       title:       "Incorrect billing — charged twice for the same booking",
-      description: "My account was charged twice for the same booking. I see two Payment entries for Booking #A3F291. The second charge appeared 3 days after the first. Please reverse the duplicate charge immediately.",
+      description: "My account was charged twice for the same booking. I see two payment entries for the same booking ID. The second charge appeared 3 days after the first. Please reverse the duplicate charge immediately.",
       status:      "RESOLVED",
       creatorIdx:  3,
       role:        "CUSTOMER",
-      adminResponse: "We have investigated and confirmed the duplicate charge. The second payment has been reversed. Please allow 3-5 business days for the refund to appear.",
+      adminResponse: "We confirmed the duplicate charge. The second payment has been reversed. Please allow 3-5 business days for the refund to appear.",
     },
     {
       title:       "Customer left a false negative review",
-      description: "A customer who booked our photography service left a 1-star review claiming we were unprofessional. We have video evidence and testimonials from other guests at the same event showing our team was courteous and professional throughout. The review appears to be malicious and is severely harming our business.",
+      description: "A customer who booked our photography service left a 1-star review claiming we were unprofessional. We have video evidence showing our team was courteous throughout. The review appears malicious and is severely harming our business reputation.",
       status:      "CLOSED",
-      creatorIdx:  4, // provider index
+      creatorIdx:  4,
       role:        "PROVIDER",
-      adminResponse: "We reviewed the evidence submitted by the provider and the customer's account history. The review has been flagged and removed from the platform as it violates our content guidelines. The customer has been warned.",
+      adminResponse: "We reviewed the evidence. The review has been flagged and removed as it violates our content guidelines. The customer has been warned.",
     },
   ];
 
-  let disputeCount = 0;
   try {
     for (const d of DISPUTE_DATA) {
-    const creator = d.role === "CUSTOMER"
-      ? createdCustomers[d.creatorIdx]
-      : { id: providers[d.creatorIdx].user.id, name: providers[d.creatorIdx].businessName };
+      const creator = d.role === "CUSTOMER"
+        ? createdCustomers[d.creatorIdx]
+        : { id: providers[d.creatorIdx].user.id, name: providers[d.creatorIdx].businessName };
 
-    await prisma.dispute.create({
-      data: {
-        title:         d.title,
-        description:   d.description,
-        status:        d.status as never,
-        creatorId:     creator.id,
-        creatorRole:   d.role as never,
-        adminResponse: d.adminResponse,
-        resolvedAt:    ["RESOLVED", "CLOSED"].includes(d.status) ? new Date(Date.now() - randomInt(1, 14) * 86400000) : null,
-        attachments: {
-          create: [
-            {
-              filePath: `https://picsum.photos/seed/dispute-${d.creatorIdx}-a/400/300`,
-              fileName: "evidence_photo_1.jpg",
-              fileSize: randomInt(200000, 800000),
-            },
-            {
-              filePath: `https://picsum.photos/seed/dispute-${d.creatorIdx}-b/400/300`,
-              fileName: "evidence_photo_2.jpg",
-              fileSize: randomInt(200000, 800000),
-            },
-          ],
+      await prisma.dispute.create({
+        data: {
+          title:         d.title,
+          description:   d.description,
+          status:        d.status as never,
+          creatorId:     creator.id,
+          creatorRole:   d.role as never,
+          adminResponse: d.adminResponse,
+          resolvedAt:    ["RESOLVED", "CLOSED"].includes(d.status) ? new Date(Date.now() - randomInt(1, 14) * 86400000) : null,
+          attachments: {
+            create: [
+              {
+                filePath: `https://picsum.photos/seed/dispute-${d.creatorIdx}-a/400/300`,
+                fileName: "evidence_photo_1.jpg",
+                fileSize: randomInt(200000, 800000),
+              },
+              {
+                filePath: `https://picsum.photos/seed/dispute-${d.creatorIdx}-b/400/300`,
+                fileName: "evidence_photo_2.jpg",
+                fileSize: randomInt(200000, 800000),
+              },
+            ],
+          },
         },
-      },
-    });
-  }
-    disputeCount++;
+      });
     }
-    console.log(`✓ ${disputeCount} disputes seeded.`);
+    console.log(`✓ ${DISPUTE_DATA.length} disputes seeded.`);
   } catch (e) {
-    console.log("  ↳ Skipped disputes (run 'npx prisma migrate dev --name add-dispute-model' first):", (e as Error).message?.slice(0, 80));
+    console.log("  ↳ Skipped disputes:", (e as Error).message?.slice(0, 100));
   }
-
   console.log("\n🎉 Database fully seeded!");
   console.log("   Admin:     admin@chronos.com   / Admin@123!");
   console.log("   Customer:  yasmine@example.com / Customer@123!");

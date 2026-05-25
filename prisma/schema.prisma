@@ -89,6 +89,7 @@ model User {
   sentMessages       Message[]             @relation("SentMessages")
   receivedMessages   Message[]             @relation("ReceivedMessages")
   reviews            Review[]              @relation("CustomerReviews")
+  disputes           Dispute[]             @relation("DisputeCreator")
 
   @@map("users")
 }
