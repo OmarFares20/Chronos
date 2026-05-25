@@ -76,7 +76,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   };
 
   // Resolve navigation links contextually. Default to customer to avoid crashes before auth hydration.
-  const nav = user?.role === "PROVIDER" ? PROVIDER_NAV : CUSTOMER_NAV;
+  const nav = user?.role === "PROVIDER" ? PROVIDER_NAV : CUSTOMER_NAV; // ADMIN falls back to CUSTOMER_NAV + Admin Console link below
 
   return (
     <div className={styles.shell}>
@@ -98,9 +98,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Role pill */}
         {!collapsed && user && (
-          <div className={styles.rolePill}>
-            <span className={styles.roleDot} />
-            {user.role === "PROVIDER" ? "Provider Account" : "Customer Account"}
+          <div className={styles.rolePill} style={user.role === "ADMIN" ? { borderColor: "rgba(196,164,82,0.4)", background: "rgba(196,164,82,0.08)" } : {}}>
+            <span className={styles.roleDot} style={user.role === "ADMIN" ? { background: "var(--color-gold)" } : {}} />
+            {user.role === "ADMIN" ? "Admin Account" : user.role === "PROVIDER" ? "Provider Account" : "Customer Account"}
           </div>
         )}
 

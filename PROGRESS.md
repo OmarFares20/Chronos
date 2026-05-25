@@ -364,3 +364,18 @@
 - **Migration command**: `npx prisma migrate dev --name add_provider_rating_fields` then `npx prisma generate`
 - **Re-seed command**: `npx prisma db seed`
 
+---
+
+## Admin Role & Dispute Management
+
+### [x] Fix 1 – Admin Account Showing as "Customer" ✅
+- **Seed**: admin already created with `role: "ADMIN"` — correct
+- **JWT**: login route already includes `role` in token payload — correct  
+- **Auth /me**: returns `role` from DB — correct
+- **Root cause was purely UI**: `dashboard/layout.tsx` role pill only checked PROVIDER vs fallback-to-Customer, never checking ADMIN
+- **Fixed** (`src/app/dashboard/layout.tsx`):
+  - Role pill now shows **"Admin Account"** when `role === "ADMIN"`
+  - Admin role dot styled gold (`var(--color-gold)`) with gold border/background on the pill
+  - Admin Console nav link was already conditionally shown for ADMIN — unchanged
+- **Quick DB fix** if admin already exists with wrong role: run `npx prisma studio` → Users table → find admin@chronos.com → set role to ADMIN, or re-seed with `npx prisma db seed`
+
