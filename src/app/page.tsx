@@ -34,12 +34,50 @@ const stats = [
 ];
 
 export default async function HomePage() {
-  const promotions = await prisma.package.findMany({
-    where: { isPromotion: true },
-    take: 4,
-    include: { service: { include: { provider: true } } },
-    orderBy: { discountPercentage: 'desc' }
-  });
+  // ── Fetch all dynamic homepage data ──────────────────────────────────────
+  const [promotions, featuredProviders, topRated, recentReviews, liveStats] = await Promise.all([
+    // Exclusive deals
+    prisma.package.findMany({
+      where: { isPromotion: true },
+      take: 4,
+      include: { service: { include: { provider: true } } },
+      orderBy: { discountPercentage: "desc" },
+    }),
+    // Featured providers (verified, varied categories)
+    prisma.providerProfile.findMany({
+      where: { isVerified: true, applicationStatus: "APPROVED" },
+      take: 6,
+      orderBy: { reviewCount: "desc" },
+      include: { user: { select: { avatarUrl: true } } },
+    }),
+    // Top rated providers
+    prisma.providerProfile.findMany({
+      where: { rating: { gte: 4.5 }, applicationStatus: "APPROVED" },
+      take: 4,
+      orderBy: { rating: "desc" },
+      include: { user: { select: { avatarUrl: true } } },
+    }),
+    // Recent 5-star reviews
+    prisma.review.findMany({
+      where: { rating: 5 },
+      take: 6,
+      orderBy: { createdAt: "desc" },
+      include: {
+        customer:  { select: { name: true, avatarUrl: true } },
+        provider:  { select: { businessName: true, categories: true } },
+      },
+    }),
+    // Live platform stats
+    Promise.all([
+      prisma.booking.count({ where: { status: { in: ["RELEASED", "IN_ESCROW"] } } }),
+      prisma.providerProfile.count({ where: { isVerified: true } }),
+      prisma.review.aggregate({ _avg: { rating: true } }),
+      prisma.user.count({ where: { role: "CUSTOMER" } }),
+    ]),
+  ]);
+
+  const [completedBookings, verifiedProviders, avgRatingResult, totalCustomers] = liveStats;
+  const avgRating = avgRatingResult._avg.rating?.toFixed(1) || "4.9";
 
   return (
     <main className={styles.main}>
@@ -125,9 +163,14 @@ export default async function HomePage() {
             </button>
           </form>
 
-          {/* Stats strip */}
+          {/* Live Stats strip */}
           <div className={styles.statsStrip}>
-            {stats.map((s) => (
+            {[
+              { value: completedBookings.toLocaleString("en-US") + "+", label: "Occasions Completed" },
+              { value: avgRating + " ★", label: "Average Rating" },
+              { value: verifiedProviders.toLocaleString("en-US") + "+", label: "Verified Providers" },
+              { value: totalCustomers.toLocaleString("en-US") + "+", label: "Happy Customers" },
+            ].map((s) => (
               <div key={s.label} className={styles.statItem}>
                 <span className={`${styles.statValue} text-gold`}>{s.value}</span>
                 <span className={styles.statLabel}>{s.label}</span>
@@ -145,6 +188,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── SERVICES ─────────────────────────────────────────────────── */}
+      {/* ── CATEGORIES ───────────────────────────────────────────────── */}
       <section className={styles.section} id="services" aria-label="Services">
         <div className={styles.sectionInner}>
           <p className={styles.sectionEyebrow}>What We Offer</p>
@@ -156,10 +200,9 @@ export default async function HomePage() {
             From the first note to the final photograph — browse elite professionals
             across every discipline of occasion craftsmanship.
           </p>
-
           <div className={styles.servicesGrid}>
             {services.map((s) => (
-              <Link key={s.id} href={`/services/${s.id}`} className={styles.serviceCard} id={`service-${s.id}`}>
+              <Link key={s.id} href={`/providers?category=${s.id.toUpperCase()}`} className={styles.serviceCard} id={`service-${s.id}`}>
                 <span className={styles.serviceIcon}>{s.icon}</span>
                 <h3 className={styles.serviceTitle}>{s.title}</h3>
                 <p className={styles.serviceDesc}>{s.desc}</p>
@@ -170,44 +213,180 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── PROMOTIONS ───────────────────────────────────────────────── */}
-      {promotions.length > 0 && (
-        <section className={styles.section} id="promotions" aria-label="Promotions and Deals">
+      {/* ── FEATURED PROVIDERS ───────────────────────────────────────── */}
+      {featuredProviders.length > 0 && (
+        <section className={`${styles.section} ${styles.sectionAlt}`} id="featured" aria-label="Featured Providers">
           <div className={styles.sectionInner}>
-            <p className={styles.sectionEyebrow}>Special Offers</p>
+            <p className={styles.sectionEyebrow}>Hand-Picked Excellence</p>
+            <h2 className={styles.sectionTitle}>
+              Featured <span className="text-gold">Providers</span>
+            </h2>
+            <p className={styles.sectionDesc}>
+              Verified professionals with outstanding track records — trusted by thousands of Egyptian families.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.25rem" }}>
+              {featuredProviders.map((p) => (
+                <Link key={p.id} href={`/providers/${p.id}`}
+                  style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", background: "rgba(14,15,22,0.95)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, textDecoration: "none", transition: "all 0.2s", position: "relative", overflow: "hidden" }}>
+                  {/* Gold shimmer line */}
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, var(--color-gold), transparent)" }} />
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+                    <img
+                      src={p.user?.avatarUrl || p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.businessName.slice(0,2))}&background=1a1b2e&color=C4A452&size=56`}
+                      alt={p.businessName}
+                      style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", border: "2px solid rgba(196,164,82,0.3)", flexShrink: 0 }}
+                    />
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{p.businessName}</p>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: "0.62rem", fontWeight: 700, color: "#50c878", background: "rgba(80,200,120,0.1)", border: "1px solid rgba(80,200,120,0.3)", borderRadius: 99, padding: "0.1rem 0.4rem" }}>✓ Verified</span>
+                      </div>
+                      <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{p.categories[0]?.replace("_", " ")} · {p.location}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        {"★★★★★".split("").map((star, i) => (
+                          <span key={i} style={{ fontSize: "0.8rem", color: i < Math.round(p.rating || 0) ? "var(--color-gold)" : "rgba(255,255,255,0.15)" }}>{star}</span>
+                        ))}
+                        <span style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", marginLeft: 4 }}>{p.rating?.toFixed(1)} ({p.reviewCount})</span>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "0.78rem", color: "var(--color-gold)", fontWeight: 700 }}>From {formatPrice(p.minPrice || 0)}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: "var(--color-gold)", fontSize: "0.78rem", gap: 4 }}>
+                    View Profile <ArrowRight size={14} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div style={{ textAlign: "center", marginTop: "2rem" }}>
+              <Link href="/providers" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.75rem 2rem", border: "1px solid rgba(196,164,82,0.4)", borderRadius: 10, color: "var(--color-gold)", fontSize: "0.88rem", fontWeight: 600, textDecoration: "none" }}>
+                Browse All Providers <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── EXCLUSIVE DEALS ───────────────────────────────────────────── */}
+      {promotions.length > 0 && (
+        <section className={styles.section} id="promotions" aria-label="Exclusive Deals">
+          <div className={styles.sectionInner}>
+            <p className={styles.sectionEyebrow}>Limited Time Offers</p>
             <h2 className={styles.sectionTitle}>
               Exclusive <span className="text-gold">Deals</span>
             </h2>
-            <div className={styles.servicesGrid}>
+            <p className={styles.sectionDesc}>Book now before these hand-picked offers expire.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1.25rem" }}>
               {promotions.map((pkg) => {
-                const originalPrice = Number(pkg.price) / (1 - (pkg.discountPercentage || 0) / 100);
+                const orig = Number(pkg.price) / (1 - (pkg.discountPercentage || 0) / 100);
                 return (
-                  <Link key={pkg.id} href={`/providers/${pkg.service.providerId}`} className={styles.serviceCard}>
-                    <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--color-gold)', color: '#000', padding: '0.3rem 0.7rem', borderRadius: '8px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.76rem', zIndex: 10, letterSpacing: '0.03em', boxShadow: '0 2px 8px rgba(196,164,82,0.4)' }}>
-                      <Tag size={12} /> {pkg.discountPercentage}% OFF
+                  <Link key={pkg.id} href={`/providers/${pkg.service.providerId}`}
+                    style={{ position: "relative", display: "flex", flexDirection: "column", gap: "0.85rem", padding: "1.5rem", background: "rgba(14,15,22,0.95)", border: "1px solid rgba(196,164,82,0.2)", borderRadius: 16, textDecoration: "none", overflow: "hidden" }}>
+                    {/* Discount badge */}
+                    <div style={{ position: "absolute", top: 12, right: 12, background: "var(--color-gold)", color: "#000", padding: "0.3rem 0.7rem", borderRadius: 8, fontWeight: 800, fontSize: "0.75rem", zIndex: 10, display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 12px rgba(196,164,82,0.5)" }}>
+                      <Tag size={11} /> {pkg.discountPercentage}% OFF
                     </div>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.25rem', border: '1px solid var(--color-border-gold)' }}>
+                    {/* Gold bg shimmer */}
+                    <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at top left, rgba(196,164,82,0.06) 0%, transparent 60%)", pointerEvents: "none" }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                       <img
-                        src={`https://picsum.photos/seed/${pkg.service.provider.businessName.replace(/\s+/g, '')}/56`}
+                        src={`https://picsum.photos/seed/${pkg.service.provider.businessName.replace(/\s+/g, "")}/56`}
                         alt={pkg.service.provider.businessName}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(196,164,82,0.25)" }}
                       />
+                      <div>
+                        <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: 2 }}>{pkg.name}</p>
+                        <p style={{ fontSize: "0.72rem", color: "var(--color-gold)" }}>{pkg.service.provider.businessName}</p>
+                      </div>
                     </div>
-                    <h3 className={styles.serviceTitle}>{pkg.name}</h3>
-                    <p className={styles.serviceDesc} style={{ color: 'var(--color-gold)', fontWeight: 'bold' }}>
-                      {pkg.service.provider.businessName}
-                    </p>
-                    <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ textDecoration: 'line-through', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                        {formatPrice(originalPrice)}
-                      </span>
-                      <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-                        {formatPrice(Number(pkg.price))}
-                      </span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", marginTop: "auto" }}>
+                      <span style={{ textDecoration: "line-through", color: "var(--color-text-muted)", fontSize: "0.82rem" }}>{formatPrice(orig)}</span>
+                      <span style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--color-gold)" }}>{formatPrice(Number(pkg.price))}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", color: "var(--color-gold)", fontSize: "0.75rem", gap: 4, fontWeight: 600 }}>
+                      Book this deal <ArrowRight size={12} />
                     </div>
                   </Link>
                 );
               })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── TOP RATED ─────────────────────────────────────────────────── */}
+      {topRated.length > 0 && (
+        <section className={`${styles.section} ${styles.sectionAlt}`} id="top-rated" aria-label="Top Rated">
+          <div className={styles.sectionInner}>
+            <p className={styles.sectionEyebrow}>The Best of the Best</p>
+            <h2 className={styles.sectionTitle}>
+              Top Rated <span className="text-gold">This Month</span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+              {topRated.map((p, i) => (
+                <Link key={p.id} href={`/providers/${p.id}`}
+                  style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.1rem 1.25rem", background: "rgba(14,15,22,0.9)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, textDecoration: "none", transition: "all 0.2s" }}>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "rgba(196,164,82,0.3)", fontFamily: "var(--font-display)", width: 28, flexShrink: 0 }}>#{i + 1}</div>
+                  <img
+                    src={p.user?.avatarUrl || p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.businessName.slice(0,2))}&background=1a1b2e&color=C4A452&size=40`}
+                    alt={p.businessName}
+                    style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(196,164,82,0.3)", flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--color-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.businessName}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                      <span style={{ color: "var(--color-gold)", fontSize: "0.72rem" }}>★ {p.rating?.toFixed(1)}</span>
+                      <span style={{ color: "var(--color-text-muted)", fontSize: "0.68rem" }}>({p.reviewCount} reviews)</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── CUSTOMER REVIEWS ──────────────────────────────────────────── */}
+      {recentReviews.length > 0 && (
+        <section className={styles.section} id="reviews" aria-label="Customer Reviews">
+          <div className={styles.sectionInner}>
+            <p className={styles.sectionEyebrow}>What Our Customers Say</p>
+            <h2 className={styles.sectionTitle}>
+              Real Stories, <span className="text-gold">Real Magic</span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.1rem" }}>
+              {recentReviews.map((r) => (
+                <div key={r.id}
+                  style={{ padding: "1.5rem", background: "rgba(14,15,22,0.9)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {"★★★★★".split("").map((s, i) => (
+                      <span key={i} style={{ color: "var(--color-gold)", fontSize: "0.85rem" }}>{s}</span>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: "0.88rem", color: "var(--color-text-muted)", lineHeight: 1.65, fontStyle: "italic", flex: 1 }}>
+                    "{r.comment}"
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                      <img
+                        src={r.customer?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent((r.customer?.name || "C").slice(0,2))}&background=1a1b2e&color=C4A452&size=36`}
+                        alt={r.customer?.name || "Customer"}
+                        style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }}
+                      />
+                      <div>
+                        <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--color-text-primary)" }}>{r.customer?.name}</p>
+                        <p style={{ fontSize: "0.68rem", color: "var(--color-text-muted)" }}>via Chronos</p>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "0.68rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+                      re: {r.provider?.businessName?.split(" ").slice(0, 2).join(" ")}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -221,7 +400,6 @@ export default async function HomePage() {
             Simple. Secure.{" "}
             <span className="text-gold">Seamless.</span>
           </h2>
-
           <div className={styles.stepsGrid}>
             {steps.map((step, i) => (
               <div key={i} className={styles.stepCard}>
@@ -237,17 +415,30 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── CTA BAND ─────────────────────────────────────────────────── */}
+      <section style={{ background: "linear-gradient(135deg, rgba(196,164,82,0.12) 0%, rgba(196,164,82,0.04) 100%)", borderTop: "1px solid rgba(196,164,82,0.2)", borderBottom: "1px solid rgba(196,164,82,0.2)", padding: "4rem 1.5rem", textAlign: "center" }}>
+        <p style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--color-gold)", marginBottom: "0.75rem" }}>Start Planning Today</p>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.6rem, 4vw, 2.4rem)", color: "var(--color-text-primary)", letterSpacing: "0.06em", marginBottom: "1rem", lineHeight: 1.2 }}>
+          Your Perfect Occasion<br /><span style={{ color: "var(--color-gold)" }}>Awaits You</span>
+        </h2>
+        <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", maxWidth: 480, margin: "0 auto 2rem", lineHeight: 1.7 }}>
+          Join thousands of Egyptian families who trusted Chronos to orchestrate their most treasured moments.
+        </p>
+        <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+          <Link href="/providers" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.9rem 2rem", background: "var(--gradient-gold)", borderRadius: 12, color: "#000", fontWeight: 800, fontSize: "0.9rem", textDecoration: "none", letterSpacing: "0.04em" }}>
+            <Diamond size={16} /> Browse Providers
+          </Link>
+          <Link href="/register" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.9rem 2rem", border: "1px solid rgba(196,164,82,0.35)", borderRadius: 12, color: "var(--color-gold)", fontSize: "0.9rem", textDecoration: "none" }}>
+            Create Free Account <ArrowRight size={16} />
+          </Link>
+        </div>
+      </section>
+
       {/* ── TRUST BANNER ─────────────────────────────────────────────── */}
       <section className={styles.trustBanner} id="about" aria-label="Trust and security">
         <div className={styles.trustInner}>
           <div className={styles.trustMascot}>
-            <Image
-              src="/chronos-logo.webp"
-              alt="Chronos logo"
-              width={90}
-              height={90}
-              className={styles.trustMascotImg}
-            />
+            <Image src="/chronos-logo.webp" alt="Chronos logo" width={90} height={90} className={styles.trustMascotImg} />
           </div>
           <div className={styles.trustText}>
             <h2 className={styles.trustTitle}>
@@ -264,7 +455,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
+            {/* ── FOOTER ───────────────────────────────────────────────────── */}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>

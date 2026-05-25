@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, UnauthorizedError } from "@/lib/auth";
 import { z } from "zod";
 
 const UpdateDisputeSchema = z.object({
@@ -54,8 +54,8 @@ export async function PATCH(
 
     return NextResponse.json({ dispute: updated });
   } catch (e: unknown) {
-    if (e instanceof Error && e.message === "UNAUTHORIZED")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (e instanceof UnauthorizedError)
+      return NextResponse.json({ error: "Unauthorized" }, { status: e.statusCode || 401 });
     console.error("[disputes/:id PATCH]", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
@@ -92,8 +92,8 @@ export async function GET(
 
     return NextResponse.json({ dispute });
   } catch (e: unknown) {
-    if (e instanceof Error && e.message === "UNAUTHORIZED")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (e instanceof UnauthorizedError)
+      return NextResponse.json({ error: "Unauthorized" }, { status: e.statusCode || 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

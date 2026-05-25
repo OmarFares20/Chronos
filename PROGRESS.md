@@ -334,3 +334,21 @@
 - **5 disputes** covering all statuses (OPEN, IN_PROGRESS, RESOLVED ×2, CLOSED), filed by both customers and providers, all with 2 picsum placeholder attachments, 2 with admin responses
 - **Re-seed command**: `npx prisma db seed`
 
+---
+
+## Homepage & Disputes Fix
+
+### [x] Admin Disputes Visibility Fix ✅
+- **Root cause**: `requireAuth` throws `UnauthorizedError` (custom class) but all dispute routes caught only `Error` with `message === "UNAUTHORIZED"` — so admin requests 401'd silently
+- **Fixed**: all catch blocks in `/api/disputes/route.ts` and `/api/disputes/[id]/route.ts` now import and use `instanceof UnauthorizedError` with `.statusCode`
+
+### [x] Homepage Redesign — Dynamic & Lively ✅
+- **Live DB stats** in hero strip: Occasions Completed, Avg Rating, Verified Providers, Happy Customers — all pulled from real DB counts
+- **Featured Providers section**: 6-card grid of verified providers with avatar, name, ✓ Verified badge, star rating, review count, starting price, location, "View Profile →"
+- **Exclusive Deals**: redesigned cards with gold shimmer radial gradient, larger price comparison, provider logo thumbnail, "Book this deal →" link
+- **Top Rated This Month**: ranked list (#1–#4) with avatar, rating, review count
+- **Customer Reviews**: 6-card masonry-style grid of real 5-star reviews from DB — customer photo, name, quote, provider attribution
+- **CTA Band**: full-width gold gradient band with "Browse Providers" + "Create Free Account" buttons
+- **How It Works** and **Trust Banner** sections retained and repositioned
+- Category cards now link to `/providers?category=X` for filtered browsing
+

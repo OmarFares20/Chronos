@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, UnauthorizedError } from "@/lib/auth";
 import { z } from "zod";
 
 const CreateDisputeSchema = z.object({
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ dispute }, { status: 201 });
   } catch (e: unknown) {
-    if (e instanceof Error && e.message === "UNAUTHORIZED")
+    if (e instanceof UnauthorizedError)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[disputes POST]", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ disputes });
   } catch (e: unknown) {
-    if (e instanceof Error && e.message === "UNAUTHORIZED")
+    if (e instanceof UnauthorizedError)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[disputes GET]", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
