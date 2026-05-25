@@ -35,7 +35,9 @@ const stats = [
 
 export default async function HomePage() {
   // ── Fetch all dynamic homepage data ──────────────────────────────────────
-  const [promotions, featuredProviders, topRated, recentReviews, liveStats] = await Promise.all([
+  // ── Fetch all dynamic homepage data ─────────────────────────────────────
+  // NOTE: rating/reviewCount are computed from the Review relation — no schema fields needed
+  const [promotions, rawFeatured, recentReviews, liveStats] = await Promise.all([
     // Exclusive deals
     prisma.package.findMany({
       where: { isPromotion: true },
@@ -43,19 +45,15 @@ export default async function HomePage() {
       include: { service: { include: { provider: true } } },
       orderBy: { discountPercentage: "desc" },
     }),
-    // Featured providers (verified, varied categories)
+    // Featured providers — verified only, include reviews for rating
     prisma.providerProfile.findMany({
-      where: { isVerified: true, applicationStatus: "APPROVED" },
-      take: 6,
-      orderBy: { reviewCount: "desc" },
-      include: { user: { select: { avatarUrl: true } } },
-    }),
-    // Top rated providers
-    prisma.providerProfile.findMany({
-      where: { rating: { gte: 4.5 }, applicationStatus: "APPROVED" },
-      take: 4,
-      orderBy: { rating: "desc" },
-      include: { user: { select: { avatarUrl: true } } },
+      where: { isVerified: true },
+      take: 12, // fetch more so we can sort by computed rating
+      include: {
+        user:    { select: { avatarUrl: true } },
+        reviews: { select: { rating: true } },
+        services: { include: { packages: { select: { price: true }, take: 1, orderBy: { price: "asc" } } }, take: 1 },
+      },
     }),
     // Recent 5-star reviews
     prisma.review.findMany({
@@ -63,11 +61,11 @@ export default async function HomePage() {
       take: 6,
       orderBy: { createdAt: "desc" },
       include: {
-        customer:  { select: { name: true, avatarUrl: true } },
-        provider:  { select: { businessName: true, categories: true } },
+        customer: { select: { name: true, avatarUrl: true } },
+        provider: { select: { businessName: true, categories: true } },
       },
     }),
-    // Live platform stats
+    // Live platform stats from real DB counts
     Promise.all([
       prisma.booking.count({ where: { status: { in: ["RELEASED", "IN_ESCROW"] } } }),
       prisma.providerProfile.count({ where: { isVerified: true } }),
@@ -78,6 +76,26 @@ export default async function HomePage() {
 
   const [completedBookings, verifiedProviders, avgRatingResult, totalCustomers] = liveStats;
   const avgRating = avgRatingResult._avg.rating?.toFixed(1) || "4.9";
+
+  // Compute rating + minPrice for each provider from relations
+  type EnrichedProvider = typeof rawFeatured[0] & { avgRating: number; reviewCount: number; minPrice: number };
+  const enriched: EnrichedProvider[] = rawFeatured.map((p) => {
+    const ratings = p.reviews.map((r) => r.rating);
+    const avgR    = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+    const minP    = p.services.flatMap(s => s.packages).map(pk => Number(pk.price))[0] || 0;
+    return { ...p, avgRating: Math.round(avgR * 10) / 10, reviewCount: ratings.length, minPrice: minP };
+  });
+
+  // Featured: verified, sorted by review count
+  const featuredProviders = enriched
+    .sort((a, b) => b.reviewCount - a.reviewCount)
+    .slice(0, 6);
+
+  // Top rated: avg rating ≥ 4, sorted by rating desc
+  const topRated = enriched
+    .filter((p) => p.avgRating >= 4)
+    .sort((a, b) => b.avgRating - a.avgRating)
+    .slice(0, 4);
 
   return (
     <main className={styles.main}>
@@ -248,9 +266,9 @@ export default async function HomePage() {
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         {"★★★★★".split("").map((star, i) => (
-                          <span key={i} style={{ fontSize: "0.8rem", color: i < Math.round(p.rating || 0) ? "var(--color-gold)" : "rgba(255,255,255,0.15)" }}>{star}</span>
+                          <span key={i} style={{ fontSize: "0.8rem", color: i < Math.round(p.avgRating || 0) ? "var(--color-gold)" : "rgba(255,255,255,0.15)" }}>{star}</span>
                         ))}
-                        <span style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", marginLeft: 4 }}>{p.rating?.toFixed(1)} ({p.reviewCount})</span>
+                        <span style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", marginLeft: 4 }}>{p.avgRating?.toFixed(1)} ({p.reviewCount})</span>
                       </div>
                     </div>
                     <span style={{ fontSize: "0.78rem", color: "var(--color-gold)", fontWeight: 700 }}>From {formatPrice(p.minPrice || 0)}</span>
@@ -338,7 +356,7 @@ export default async function HomePage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--color-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.businessName}</p>
                     <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                      <span style={{ color: "var(--color-gold)", fontSize: "0.72rem" }}>★ {p.rating?.toFixed(1)}</span>
+                      <span style={{ color: "var(--color-gold)", fontSize: "0.72rem" }}>★ {p.avgRating?.toFixed(1)}</span>
                       <span style={{ color: "var(--color-text-muted)", fontSize: "0.68rem" }}>({p.reviewCount} reviews)</span>
                     </div>
                   </div>
