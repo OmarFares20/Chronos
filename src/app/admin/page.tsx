@@ -61,7 +61,11 @@ export default function AdminPage() {
   const [disputeLoading, setDisputeLoading] = useState(false);
   const [disputeResponse, setDisputeResponse] = useState<Record<string, string>>({});
   const [disputeFilter, setDisputeFilter] = useState("");
-  const [expandedDispute, setExpandedDispute] = useState<string | null>(null);
+  const [expandedDispute, setExpandedDispute]   = useState<string | null>(null);
+  const [selectedDispute, setSelectedDispute]   = useState<Dispute | null>(null);
+  const [disputeRoleFilter, setDisputeRoleFilter] = useState("");
+  const [savingDispute, setSavingDispute]         = useState(false);
+  const [disputeSaveMsg, setDisputeSaveMsg]       = useState("");
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -96,13 +100,16 @@ export default function AdminPage() {
       .then((r) => (r.ok ? r.json() : { users: [] }))
       .then((data) => setUsers(data.users || []))
       .finally(() => setLoadingUsers(false));
-  }, [tab, userSearch, userRole, disputeFilter]);
+  }, [tab, userSearch, userRole, disputeFilter, disputeRoleFilter]);
 
   // ── Load applications ──────────────────────────────────────────────────────
   useEffect(() => {
     if (tab === "disputes") {
       setDisputeLoading(true);
-      fetch("/api/disputes" + (disputeFilter ? `?status=${disputeFilter}` : ""))
+      const params = new URLSearchParams();
+      if (disputeFilter) params.set("status", disputeFilter);
+      if (disputeRoleFilter) params.set("role", disputeRoleFilter);
+      fetch("/api/disputes" + (params.toString() ? `?${params}` : ""))
         .then((r) => r.ok ? r.json() : { disputes: [] })
         .then((d) => setDisputes(d.disputes || []))
         .catch(() => {})
@@ -422,124 +429,216 @@ export default function AdminPage() {
 
       {/* ── APPLICATIONS ── */}
 
-      {tab === "disputes" && (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
-            <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "var(--color-text-primary)", letterSpacing: "0.06em" }}>
-              Dispute Tickets
-            </h3>
-            <select
-              value={disputeFilter}
-              onChange={(e) => setDisputeFilter(e.target.value)}
-              style={{ padding: "0.5rem 0.9rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.82rem" }}
-            >
-              <option value="">All Statuses</option>
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="CLOSED">Closed</option>
-            </select>
-          </div>
+      {tab === "disputes" && (() => {
+        const STATUS_COLOR: Record<string, string> = { OPEN: "#f2c94c", IN_PROGRESS: "#56b3ff", RESOLVED: "#50c878", CLOSED: "#9ca3af" };
+        const SEL = selectedDispute;
+        const LABEL: Record<string,string> = { OPEN:"Open", IN_PROGRESS:"In Progress", RESOLVED:"Resolved", CLOSED:"Closed" };
 
-          {disputeLoading ? (
-            <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>Loading disputes…</p>
-          ) : disputes.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "3rem", color: "var(--color-text-muted)", fontSize: "0.88rem",
-              background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px dashed rgba(255,255,255,0.07)" }}>
-              No disputes found.
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {disputes.map((d) => {
-                const STATUS_COLOR: Record<string, string> = { OPEN: "#f2c94c", IN_PROGRESS: "#56b3ff", RESOLVED: "#50c878", CLOSED: "#9ca3af" };
-                const col = STATUS_COLOR[d.status] || "#9ca3af";
-                const isOpen = expandedDispute === d.id;
-                return (
-                  <div key={d.id} style={{ background: "rgba(16,17,26,0.8)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "1.25rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "0.75rem" }}>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 600, color: "var(--color-text-primary)", fontSize: "0.92rem", marginBottom: "0.2rem" }}>{d.title}</p>
-                        <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-                          By <strong>{d.creator.name}</strong> ({d.creatorRole}) · {new Date(d.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          {d.booking?.provider?.businessName && ` · ${d.booking.provider.businessName}`}
-                        </p>
-                      </div>
-                      <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: 99, border: `1px solid ${col}55`, background: `${col}18`, color: col, whiteSpace: "nowrap" }}>
-                        {d.status.replace("_", " ")}
-                      </span>
-                    </div>
+        const saveDispute = async (updates: { status?: string; adminResponse?: string }) => {
+          if (!SEL) return;
+          setSavingDispute(true);
+          try {
+            const res = await fetch(`/api/disputes/${SEL.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updates),
+            });
+            if (res.ok) {
+              const merged = { ...SEL, ...updates };
+              setSelectedDispute(merged as Dispute);
+              setDisputes(prev => prev.map(x => x.id === SEL.id ? merged as Dispute : x));
+              setDisputeSaveMsg("✓ Saved");
+              setTimeout(() => setDisputeSaveMsg(""), 2000);
+            }
+          } finally { setSavingDispute(false); }
+        };
 
-                    {isOpen && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.6, padding: "0.75rem", background: "rgba(0,0,0,0.2)", borderRadius: 8 }}>
-                          {d.description}
-                        </p>
-                        {d.attachments.length > 0 && (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                            {d.attachments.map((a) => (
-                              <a key={a.id} href={a.filePath} target="_blank" rel="noopener noreferrer"
-                                style={{ fontSize: "0.72rem", padding: "0.2rem 0.6rem", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "var(--color-gold)", textDecoration: "none" }}>
-                                📎 {a.fileName}
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "0.75rem", alignItems: "end" }}>
-                          <div>
-                            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.4rem" }}>
-                              Update Status
-                            </label>
-                            <select
-                              defaultValue={d.status}
-                              onChange={(e) => {
-                                fetch(`/api/disputes/${d.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: e.target.value }) })
-                                  .then(() => setDisputes(prev => prev.map(x => x.id === d.id ? { ...x, status: e.target.value } : x)));
-                              }}
-                              style={{ padding: "0.55rem 0.9rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.82rem", width: "100%" }}
-                            >
-                              <option value="OPEN">Open</option>
-                              <option value="IN_PROGRESS">In Progress</option>
-                              <option value="RESOLVED">Resolved</option>
-                              <option value="CLOSED">Closed</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div>
-                          <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.4rem" }}>
-                            Admin Response
-                          </label>
-                          <textarea
-                            rows={3}
-                            placeholder="Write a response to the user…"
-                            defaultValue={d.adminResponse || ""}
-                            onChange={(e) => setDisputeResponse(prev => ({ ...prev, [d.id]: e.target.value }))}
-                            style={{ width: "100%", padding: "0.75rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "var(--color-text-primary)", fontSize: "0.85rem", fontFamily: "var(--font-body)", resize: "vertical", outline: "none", boxSizing: "border-box" }}
-                          />
-                          <button
-                            onClick={() => {
-                              const resp = disputeResponse[d.id] ?? d.adminResponse ?? "";
-                              fetch(`/api/disputes/${d.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminResponse: resp }) })
-                                .then(() => { setDisputes(prev => prev.map(x => x.id === d.id ? { ...x, adminResponse: resp } : x)); setActionMsg("Response saved."); setTimeout(() => setActionMsg(""), 2500); });
-                            }}
-                            style={{ marginTop: "0.5rem", padding: "0.5rem 1.2rem", background: "var(--gradient-gold)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, fontSize: "0.8rem", fontFamily: "var(--font-body)", cursor: "pointer" }}
-                          >
-                            Save Response
-                          </button>
-                        </div>
-                      </div>
-                    )}
+        return (
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
 
-                    <button onClick={() => setExpandedDispute(isOpen ? null : d.id)}
-                      style={{ marginTop: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "var(--color-gold)", fontSize: "0.78rem", fontFamily: "var(--font-body)", padding: 0 }}>
-                      {isOpen ? "Collapse ▲" : "View & Respond ▼"}
-                    </button>
+            {/* ── LEFT: dispute list ── */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Header + filters */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
+                <div>
+                  <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "var(--color-text-primary)", letterSpacing: "0.06em", margin: 0 }}>
+                    Dispute Management
+                  </h3>
+                  <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "0.2rem" }}>
+                    {disputes.length} ticket{disputes.length !== 1 ? "s" : ""} found
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <select value={disputeFilter} onChange={(e) => setDisputeFilter(e.target.value)}
+                    style={{ padding: "0.45rem 0.8rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.78rem" }}>
+                    <option value="">All Statuses</option>
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                  </select>
+                  <select value={disputeRoleFilter} onChange={(e) => setDisputeRoleFilter(e.target.value)}
+                    style={{ padding: "0.45rem 0.8rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.78rem" }}>
+                    <option value="">All Roles</option>
+                    <option value="CUSTOMER">Customers</option>
+                    <option value="PROVIDER">Providers</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Table */}
+              {disputeLoading ? (
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>Loading disputes…</p>
+              ) : disputes.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "3rem", color: "var(--color-text-muted)", fontSize: "0.88rem", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px dashed rgba(255,255,255,0.07)" }}>
+                  No disputes match the selected filters.
+                </div>
+              ) : (
+                <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                  {/* Table header */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 100px 80px 90px", gap: "0", background: "rgba(0,0,0,0.35)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0.6rem 1rem" }}>
+                    {["Title", "Filed By", "Date", "Role", ""].map((h, i) => (
+                      <span key={i} style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)" }}>{h}</span>
+                    ))}
                   </div>
-                );
-              })}
+                  {disputes.map((d, i) => {
+                    const col = STATUS_COLOR[d.status] || "#9ca3af";
+                    const isSelected = SEL?.id === d.id;
+                    return (
+                      <div key={d.id} style={{
+                        display: "grid", gridTemplateColumns: "1fr 160px 100px 80px 90px",
+                        gap: 0, padding: "0.85rem 1rem", alignItems: "center",
+                        borderBottom: i < disputes.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                        background: isSelected ? "rgba(196,164,82,0.07)" : "rgba(16,17,26,0.8)",
+                        cursor: "pointer", transition: "background 0.15s",
+                      }}
+                        onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
+                        onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(16,17,26,0.8)"; }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{d.title}</p>
+                          {d.booking?.provider?.businessName && (
+                            <p style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>re: {d.booking.provider.businessName}</p>
+                          )}
+                        </div>
+                        <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{d.creator.name}</p>
+                        <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{new Date(d.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                        <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: 99, border: `1px solid ${col}44`, background: `${col}15`, color: col }}>
+                          {LABEL[d.status] || d.status}
+                        </span>
+                        <button onClick={() => setSelectedDispute(d)}
+                          style={{ padding: "0.3rem 0.7rem", borderRadius: 7, background: isSelected ? "var(--gradient-gold)" : "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: isSelected ? "#000" : "var(--color-text-primary)", fontSize: "0.75rem", fontWeight: 600, fontFamily: "var(--font-body)", cursor: "pointer" }}>
+                          {isSelected ? "Viewing" : "View →"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* ── RIGHT: detail panel ── */}
+            {SEL && (
+              <div style={{ width: 380, flexShrink: 0, background: "rgba(14,15,22,0.98)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 14, padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem", position: "sticky", top: "1rem", maxHeight: "85vh", overflowY: "auto" }}>
+                {/* Panel header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <p style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--color-gold)", marginBottom: "0.3rem" }}>
+                      Dispute #{SEL.id.slice(-6).toUpperCase()}
+                    </p>
+                    <h4 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "var(--color-text-primary)", letterSpacing: "0.04em", margin: 0, lineHeight: 1.3 }}>
+                      {SEL.title}
+                    </h4>
+                  </div>
+                  <button onClick={() => setSelectedDispute(null)}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "1.1rem", padding: "0.1rem 0.3rem" }}>✕</button>
+                </div>
+
+                {/* Creator info */}
+                <div style={{ padding: "0.85rem", background: "rgba(0,0,0,0.25)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                  <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>
+                    <strong style={{ color: "var(--color-text-primary)" }}>Filed by:</strong> {SEL.creator.name} ({SEL.creator.email})
+                  </p>
+                  <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>
+                    <strong style={{ color: "var(--color-text-primary)" }}>Role:</strong> {SEL.creatorRole}
+                  </p>
+                  <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>
+                    <strong style={{ color: "var(--color-text-primary)" }}>Date:</strong> {new Date(SEL.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                  {SEL.booking && (
+                    <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>
+                      <strong style={{ color: "var(--color-text-primary)" }}>Booking:</strong> #{SEL.booking.id.slice(-6).toUpperCase()}
+                      {SEL.booking.provider?.businessName && ` · ${SEL.booking.provider.businessName}`}
+                      {SEL.booking.amount && ` · EGP ${Number(SEL.booking.amount).toLocaleString("en-US")}`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div>
+                  <p style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>Description</p>
+                  <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.65, padding: "0.75rem", background: "rgba(0,0,0,0.2)", borderRadius: 8 }}>
+                    {SEL.description}
+                  </p>
+                </div>
+
+                {/* Attachments */}
+                {SEL.attachments.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>Attachments</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {SEL.attachments.map((a) => (
+                        <a key={a.id} href={a.filePath} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: "0.72rem", padding: "0.25rem 0.65rem", borderRadius: 6, background: "rgba(196,164,82,0.1)", color: "var(--color-gold)", textDecoration: "none", border: "1px solid rgba(196,164,82,0.2)" }}>
+                          📎 {a.fileName}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Status update */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
+                    Update Status
+                  </label>
+                  <select value={SEL.status}
+                    onChange={(e) => { setSelectedDispute({ ...SEL, status: e.target.value }); saveDispute({ status: e.target.value }); }}
+                    style={{ width: "100%", padding: "0.6rem 0.9rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.85rem", outline: "none" }}>
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                  </select>
+                </div>
+
+                {/* Admin response */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
+                    Admin Response
+                  </label>
+                  <textarea rows={4} value={disputeResponse[SEL.id] ?? SEL.adminResponse ?? ""}
+                    placeholder="Write a response visible to the user…"
+                    onChange={(e) => setDisputeResponse(prev => ({ ...prev, [SEL.id]: e.target.value }))}
+                    style={{ width: "100%", padding: "0.75rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "var(--color-text-primary)", fontSize: "0.85rem", fontFamily: "var(--font-body)", resize: "vertical", outline: "none", boxSizing: "border-box" }}
+                  />
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.6rem" }}>
+                    <button
+                      onClick={() => saveDispute({ adminResponse: disputeResponse[SEL.id] ?? SEL.adminResponse ?? "" })}
+                      disabled={savingDispute}
+                      style={{ flex: 1, padding: "0.6rem", background: savingDispute ? "rgba(196,164,82,0.4)" : "var(--gradient-gold)", border: "none", borderRadius: 8, color: savingDispute ? "rgba(0,0,0,0.5)" : "#000", fontWeight: 700, fontSize: "0.82rem", fontFamily: "var(--font-body)", cursor: savingDispute ? "wait" : "pointer" }}>
+                      {savingDispute ? "Saving…" : "Save Response"}
+                    </button>
+                    {disputeSaveMsg && (
+                      <span style={{ fontSize: "0.78rem", color: "#50c878", fontWeight: 600 }}>{disputeSaveMsg}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
       {tab === "applications" && (
         <div className={styles.section}>
           {actionMsg && (

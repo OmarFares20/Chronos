@@ -300,3 +300,20 @@
 - **`.messageBubbleSelf .bubbleContent`**: `align-items: flex-end` so the timestamp sits under the right edge of the sent bubble
 - **Mobile** (`max-width: 768px`): bubbles capped at 85% width; reduced padding
 
+---
+
+## Admin & Showcase Data
+
+### [x] Fix 1 – Admin Dispute Management View ✅
+- **Removed** any "File a Dispute" capability from the admin panel — admin is management-only
+- **List view**: full-width table with columns: Title, Filed By, Date, Role badge, View button
+- **Dual filters**: status dropdown (All / Open / In Progress / Resolved / Closed) + role dropdown (All / Customers / Providers) — both wired to API query params
+- **Slide-in detail panel** (sticky right column, 380px): appears when a row is clicked
+  - Dispute ID, title, creator name + email, role, date, linked booking (ID + provider + amount)
+  - Full description in a readable block
+  - Attachment links (gold pills, open in new tab)
+  - Status dropdown — saves immediately on change (inline PATCH)
+  - Admin response textarea + Save button with loading state + "✓ Saved" confirmation
+- **Active row highlighting**: selected dispute row shows gold tint + "Viewing" label
+- **API**: `GET /api/disputes` already returns all disputes for admin with optional `?status=` and `?role=` filters; `PATCH /api/disputes/[id]` already restricted to ADMIN role
+
