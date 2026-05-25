@@ -129,6 +129,11 @@ model ProviderProfile {
   socialLinks        String?           // JSON: { instagram, facebook, website }
   avatarUrl          String?           // Profile photo — /uploads/<file> or external URL
   isSetupComplete    Boolean           @default(false)
+  // Aggregated rating fields — updated whenever a review is created/updated
+  rating             Float             @default(0)
+  reviewCount        Int               @default(0)
+  minPrice           Int               @default(0)
+  applicationStatus  String            @default("APPROVED")
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 

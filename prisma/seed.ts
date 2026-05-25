@@ -470,6 +470,26 @@ async function main() {
   }
   console.log(`✓ ${bookingCount} bookings seeded (with payments & reviews).`);
 
+  // ── ROLL UP RATINGS ───────────────────────────────────────────────────────
+  // After all reviews are created, compute real avg rating + count per provider
+  const allProviderIds = (await prisma.providerProfile.findMany({ select: { id: true } })).map(p => p.id);
+  let ratingUpdates = 0;
+  for (const pid of allProviderIds) {
+    const agg = await prisma.review.aggregate({
+      where: { providerId: pid },
+      _avg:   { rating: true },
+      _count: { rating: true },
+    });
+    const avg   = agg._avg.rating  ? Math.round(agg._avg.rating * 10) / 10 : 0;
+    const count = agg._count.rating || 0;
+    await prisma.providerProfile.update({
+      where: { id: pid },
+      data:  { rating: avg, reviewCount: count },
+    });
+    ratingUpdates++;
+  }
+  console.log(`✓ Rolled up ratings for ${ratingUpdates} providers.`);
+
   // ── MESSAGES (conversations for 8 booking pairs) ───────────────────────────
   const MESSAGE_SCRIPTS = [
     [

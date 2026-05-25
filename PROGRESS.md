@@ -352,3 +352,15 @@
 - **How It Works** and **Trust Banner** sections retained and repositioned
 - Category cards now link to `/providers?category=X` for filtered browsing
 
+---
+
+## Schema & Homepage Fix
+
+### [x] PrismaClientValidationError – rating field on ProviderProfile ✅
+- **Root cause**: `ProviderProfile` model had no `rating`, `reviewCount`, `minPrice`, or `applicationStatus` fields — the seed was assigning them as if they existed but Prisma silently ignored unknown fields; the homepage query then failed with a validation error when filtering/ordering by them
+- **Schema** (`prisma/schema.prisma`): added `rating Float @default(0)`, `reviewCount Int @default(0)`, `minPrice Int @default(0)`, `applicationStatus String @default("APPROVED")` to `ProviderProfile`
+- **Seed** (`prisma/seed.ts`): added a post-review rating rollup loop — after all reviews are created, iterates every provider, aggregates `_avg.rating` + `_count.rating` from the `Review` table, and writes back to `providerProfile.rating` + `reviewCount`
+- **Homepage** (`src/app/page.tsx`): no query changes needed — queries were already correct, they just had no field to hit; now the field exists and queries work
+- **Migration command**: `npx prisma migrate dev --name add_provider_rating_fields` then `npx prisma generate`
+- **Re-seed command**: `npx prisma db seed`
+
