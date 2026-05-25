@@ -164,19 +164,32 @@ const CATEGORIES = Object.keys(CATEGORY_TEMPLATES) as ServiceCategory[];
 
 async function main() {
   console.log("🧹 Cleaning up existing data...");
-  await prisma.disputeAttachment.deleteMany();
-  await prisma.dispute.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.message.deleteMany();
-  await prisma.booking.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.package.deleteMany();
-  await prisma.service.deleteMany();
-  await prisma.galleryItem.deleteMany();
-  await prisma.providerAvailability.deleteMany();
-  await prisma.providerProfile.deleteMany();
-  await prisma.user.deleteMany();
+  // Use raw SQL truncation in dependency order — safe even if some tables
+  // don't exist yet (e.g. before migrations have run for newer models).
+  const tablesTruncate = [
+    "dispute_attachments",
+    "disputes",
+    "payments",
+    "reviews",
+    "messages",
+    "bookings",
+    "events",
+    "packages",
+    "services",
+    "gallery_items",
+    "provider_availabilities",
+    "provider_profiles",
+    "provider_applications",
+    "users",
+  ];
+  for (const table of tablesTruncate) {
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM "${table}";`
+    ).catch(() => {
+      // Table may not exist yet (pending migration) — skip silently
+      console.log(`  ↳ skipped "${table}" (table may not exist yet)`);
+    });
+  }
   console.log("✓ Cleaned.");
 
   const providerPassword = await bcrypt.hash("Provider@123!", 10);
@@ -608,7 +621,9 @@ async function main() {
     },
   ];
 
-  for (const d of DISPUTE_DATA) {
+  let disputeCount = 0;
+  try {
+    for (const d of DISPUTE_DATA) {
     const creator = d.role === "CUSTOMER"
       ? createdCustomers[d.creatorIdx]
       : { id: providers[d.creatorIdx].user.id, name: providers[d.creatorIdx].businessName };
@@ -639,7 +654,12 @@ async function main() {
       },
     });
   }
-  console.log(`✓ ${DISPUTE_DATA.length} disputes seeded.`);
+    disputeCount++;
+    }
+    console.log(`✓ ${disputeCount} disputes seeded.`);
+  } catch (e) {
+    console.log("  ↳ Skipped disputes (run 'npx prisma migrate dev --name add-dispute-model' first):", (e as Error).message?.slice(0, 80));
+  }
 
   console.log("\n🎉 Database fully seeded!");
   console.log("   Admin:     admin@chronos.com   / Admin@123!");
