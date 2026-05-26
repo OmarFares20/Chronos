@@ -285,7 +285,7 @@ async function main() {
       const rating      = Math.round((3.5 + Math.random() * 1.5) * 10) / 10;
       const reviewCount = randomInt(5, 120);
       const minPrice    = randomInt(1500, 5000);
-      const provEmail   = `${businessName.toLowerCase().replace(/\s+/g, ".").replace(/[^a-z.]/g, "").slice(0, 20)}@chronos-provider.com`;
+      const provEmail   = `${businessName.toLowerCase().replace(/\s+/g, ".").replace(/[^a-z.]/g, "").slice(0, 20)}.${providerCount}@chronos-provider.com`;
 
       const provUser = await prisma.user.create({
         data: {
@@ -673,6 +673,124 @@ async function main() {
   } catch (e) {
     console.log("  ↳ Skipped disputes:", (e as Error).message?.slice(0, 100));
   }
+  // ── PROVIDER APPLICATIONS (for admin showcase) ────────────────────────────
+  const APPLICATION_DOCS = {
+    commercialRegister: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    taxCard:            "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    idCard:             "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+  };
+
+  const PENDING_APPLICANTS = [
+    { name: "Nada Farouk",       email: "nada.farouk@example.com",   category: "PHOTOGRAPHY" },
+    { name: "Youssef Ramadan",   email: "youssef.r@example.com",     category: "CATERING"    },
+    { name: "Mariam El-Gohary",  email: "mariam.eg@example.com",     category: "DECOR"       },
+    { name: "Tarek Mostafa",     email: "tarek.m@example.com",       category: "DJ_MUSIC"    },
+    { name: "Dina Khalil",       email: "dina.k@example.com",        category: "VIDEOGRAPHY" },
+  ];
+
+  const APPROVED_APPLICANT  = { name: "Sami Abdel-Aziz", email: "sami.aa@example.com", category: "FLOWERS" };
+  const REJECTED_APPLICANT  = { name: "Layla Nour",      email: "layla.n@example.com",  category: "MAKEUP"  };
+
+  let appCount = 0;
+  try {
+    // 5 PENDING applications
+    for (const ap of PENDING_APPLICANTS) {
+      const appUser = await prisma.user.create({
+        data: {
+          name:      ap.name,
+          email:     ap.email,
+          password:  providerPassword,
+          role:      "PROVIDER",
+          avatarUrl: businessAvatar(ap.name),
+        },
+      });
+      await prisma.providerApplication.create({
+        data: {
+          userId:            appUser.id,
+          status:            "PENDING",
+          ...APPLICATION_DOCS,
+        },
+      });
+      appCount++;
+    }
+
+    // 1 APPROVED application (provider profile already exists from seed above)
+    const approvedUser = await prisma.user.create({
+      data: {
+        name:      APPROVED_APPLICANT.name,
+        email:     APPROVED_APPLICANT.email,
+        password:  providerPassword,
+        role:      "PROVIDER",
+        avatarUrl: businessAvatar(APPROVED_APPLICANT.name),
+      },
+    });
+    await prisma.providerApplication.create({
+      data: {
+        userId:            approvedUser.id,
+        status:            "APPROVED",
+        ...APPLICATION_DOCS,
+      },
+    });
+    // Create a minimal provider profile for the approved applicant
+    await prisma.providerProfile.create({
+      data: {
+        userId:       approvedUser.id,
+        businessName: `${APPROVED_APPLICANT.name} Flowers`,
+        bio:          "Premium floral arrangements for all occasions.",
+        location:     "Cairo",
+        avatarUrl:    businessAvatar(APPROVED_APPLICANT.name),
+        isVerified:   true,
+        categories:   ["FLOWERS" as never],
+        socialLinks:  null,
+        services: {
+          create: [{
+            name:        "Floral Design",
+            category:    "FLOWERS" as never,
+            description: "Premium floral arrangements for all occasions.",
+            packages: {
+              create: [
+                { name: "Basic Bouquet", price: 2500, currency: "EGP", features: ["Fresh flowers", "Custom arrangement"], isHighlight: false, isPromotion: false, discountPercentage: null },
+                { name: "Full Venue Decor", price: 12000, currency: "EGP", features: ["Full venue", "Custom design", "Setup & breakdown"], isHighlight: true, isPromotion: false, discountPercentage: null },
+              ],
+            },
+          }],
+        },
+        galleryItems: {
+          create: [
+            { imageUrl: gallery("flowers", 1), label: "Floral arrangement 1", sortOrder: 0 },
+            { imageUrl: gallery("flowers", 2), label: "Floral arrangement 2", sortOrder: 1 },
+            { imageUrl: gallery("flowers", 3), label: "Floral arrangement 3", sortOrder: 2 },
+          ],
+        },
+      },
+    });
+    appCount++;
+
+    // 1 REJECTED application
+    const rejectedUser = await prisma.user.create({
+      data: {
+        name:      REJECTED_APPLICANT.name,
+        email:     REJECTED_APPLICANT.email,
+        password:  providerPassword,
+        role:      "PROVIDER",
+        avatarUrl: businessAvatar(REJECTED_APPLICANT.name),
+      },
+    });
+    await prisma.providerApplication.create({
+      data: {
+        userId:          rejectedUser.id,
+        status:          "REJECTED",
+        rejectionReason: "Documents provided were incomplete. Commercial register was expired. Please re-apply with valid documents.",
+        ...APPLICATION_DOCS,
+      },
+    });
+    appCount++;
+
+    console.log(`✓ ${appCount} provider applications seeded (5 PENDING, 1 APPROVED, 1 REJECTED).`);
+  } catch (e) {
+    console.log("  ↳ Skipped provider applications:", (e as Error).message?.slice(0, 100));
+  }
+
   console.log("\n🎉 Database fully seeded!");
   console.log("   Admin:     admin@chronos.com   / Admin@123!");
   console.log("   Customer:  yasmine@example.com / Customer@123!");

@@ -443,3 +443,15 @@
   - On error: shows error in the existing `disputeError` block
 - **`/api/messages/conversation`** updated to accept either `providerId` OR `targetUserId` directly (for admin → any user messaging), plus an optional `initialMessage` override
 
+### [x] Fix 2 – Dummy Provider Applications for Admin Showcase ✅
+- **Seed** (`prisma/seed.ts`): 7 provider applications added at end of `main()`:
+  - **5 × PENDING**: Nada Farouk (Photography), Youssef Ramadan (Catering), Mariam El-Gohary (Decor), Tarek Mostafa (DJ/Music), Dina Khalil (Videography) — each with dummy PDF document URLs
+  - **1 × APPROVED**: Sami Abdel-Aziz (Flowers) — full `ProviderProfile` + services + gallery also created
+  - **1 × REJECTED**: Layla Nour (Makeup) — with a realistic rejection reason about expired documents
+- **Admin applications API** (`/api/admin/applications/route.ts`):
+  - Added Zod validation to PATCH endpoint
+  - Fixed approve flow: now uses `providerProfile.upsert` instead of `update` — safe for applicants who don't have a profile yet (all 5 pending applicants)
+  - Reject flow: sets `isVerified: false` (no upsert needed)
+- **Re-seed command**: `npx prisma db seed`
+- **Admin UI**: already lists applications with Approve/Reject buttons — no changes needed
+
