@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     const messages = await prisma.message.findMany({
       where,
       include: {
-        sender:   { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
+        sender:   { select: { id: true, name: true, avatarUrl: true } },
+        receiver: { select: { id: true, name: true, avatarUrl: true } },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
         bookingId:  bookingId || null,
       },
       include: {
-        sender:   { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
+        sender:   { select: { id: true, name: true, avatarUrl: true } },
+        receiver: { select: { id: true, name: true, avatarUrl: true } },
       },
     });
 

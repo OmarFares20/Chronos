@@ -14,13 +14,14 @@ interface Message {
   content: string;
   isRead: boolean;
   createdAt: string;
-  sender?:   { id: string; name: string };
-  receiver?: { id: string; name: string };
+  sender?:   { id: string; name: string; avatarUrl?: string };
+  receiver?: { id: string; name: string; avatarUrl?: string };
 }
 
 interface Conversation {
   userId: string;
   name: string;
+  avatarUrl?: string;
   lastMessage: string;
   lastTime: string;
   unread: number;
@@ -37,8 +38,12 @@ function groupConversations(messages: Message[], currentUserId: string): Convers
       : (m.sender?.name   || "Unknown");
 
     if (!map.has(partnerId)) {
+      const partnerAvatar = m.senderId === currentUserId
+        ? m.receiver?.avatarUrl
+        : m.sender?.avatarUrl;
       map.set(partnerId, {
         userId: partnerId, name: partnerName,
+        avatarUrl: partnerAvatar,
         lastMessage: m.content, lastTime: m.createdAt,
         unread: 0,
         messages: [],
@@ -384,7 +389,14 @@ export default function MessagesPage() {
                   onClick={() => selectConversation(conv.userId)}
                   id={`conv-${conv.userId}`}
                 >
-                  <div className={styles.convAvatar}>{conv.name.charAt(0).toUpperCase()}</div>
+                  <div className={styles.convAvatar} style={{ padding: 0, overflow: "hidden" }}>
+                    {conv.avatarUrl ? (
+                      <img src={conv.avatarUrl} alt={conv.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                    ) : (
+                      conv.name.charAt(0).toUpperCase()
+                    )}
+                  </div>
                   <div className={styles.convInfo}>
                     <p className={styles.convName}>{conv.name}</p>
                     <p className={styles.convPreview}>{conv.lastMessage}</p>
@@ -438,13 +450,22 @@ export default function MessagesPage() {
                           {new Date(msg.createdAt).toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}
                         </div>
                       )}
-                      <div className={`${styles.messageBubble} ${isSelf ? styles.messageBubbleSelf : ""}`}>
-                        <div className={styles.bubbleAvatar}>
-                          {isSelf ? (user?.name?.charAt(0) || "?") : activeConv.name.charAt(0)}
-                        </div>
+                      <div className={`${styles.messageRow} ${isSelf ? styles.messageRowSelf : styles.messageRowOther}`}>
+                        {!isSelf && (
+                          <div className={styles.bubbleAvatar} style={{ padding: 0, overflow: "hidden" }}>
+                            {activeConv.avatarUrl ? (
+                              <img src={activeConv.avatarUrl} alt={activeConv.name}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                            ) : (
+                              activeConv.name.charAt(0)
+                            )}
+                          </div>
+                        )}
                         <div className={styles.bubbleContent}>
-                          <div className={styles.bubbleText}>{msg.content}</div>
-                          <span className={styles.bubbleTime}>
+                          <div className={`${styles.bubbleText} ${isSelf ? styles.bubbleTextSelf : styles.bubbleTextOther}`}>
+                            {msg.content}
+                          </div>
+                          <span className={`${styles.bubbleTime} ${isSelf ? styles.bubbleTimeSelf : ""}`}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             {isSelf && (
                               <span style={{

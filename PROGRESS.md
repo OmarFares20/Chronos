@@ -389,3 +389,20 @@
 - **Attachments**: already shown as gold pill links in the detail panel (open in new tab)
 - **Flow**: admin clicks row → detail panel opens → changes status + writes response → clicks Save (status) or Save Response → sees confirmation or error inline
 
+---
+
+## UI Polish – Avatars & Layout
+
+### [x] Fix 1 – Customer Avatars → Initials Only ✅
+- **Seed** (`prisma/seed.ts`): removed all `randomuser.me` portrait URLs for customers; each of the 10 customers now gets a `ui-avatars.com` initials avatar with a unique color pair (e.g. purple/gold, navy/sky, forest/mint, etc.)
+- **Navbar** (`src/components/Navbar.tsx`): account avatar now shows `<img>` with the `avatarUrl` when present; falls back to letter initial
+- **Dashboard sidebar** (`src/app/dashboard/layout.tsx`): same pattern — shows `avatarUrl` image or letter initial fallback
+- **Messages page** (`src/app/dashboard/messages/page.tsx`):
+  - `Conversation` type extended with `avatarUrl?: string`
+  - `Message` sender/receiver type extended with `avatarUrl?: string`
+  - `groupConversations()` populates `avatarUrl` from the partner's sender/receiver info
+  - Conversation list avatar and chat bubble avatar both render `<img>` when available
+- **Messages API** (`src/app/api/messages/route.ts`): `avatarUrl` added to both `sender` and `receiver` select fields
+- **Homepage reviews** (`src/app/page.tsx`): already uses `r.customer?.avatarUrl` with ui-avatars fallback — no change needed
+- **Re-seed required**: `npx prisma db seed` to apply new customer avatars
+

@@ -160,7 +160,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* User card / Logout */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: 'auto', paddingBottom: '1rem' }}>
           <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ""}`}>
-            <div className={styles.userAvatar}>{user?.name?.charAt(0).toUpperCase() || "?"}</div>
+            <div className={styles.userAvatar} style={{ padding: 0, overflow: "hidden" }}>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name || "User"}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
+              ) : (
+                user?.name?.charAt(0).toUpperCase() || "?"
+              )}
+            </div>
             {!collapsed && (
               <div className={styles.userInfo}>
                 <p className={styles.userName}>{user?.name || "Guest"}</p>

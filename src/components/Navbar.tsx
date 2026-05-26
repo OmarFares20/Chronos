@@ -96,8 +96,13 @@ export default function Navbar() {
                     aria-expanded={menuOpen}
                     aria-controls="nav-account-menu"
                   >
-                    <span className={styles.accountAvatar}>
-                      {user.name?.charAt(0).toUpperCase() || "?"}
+                    <span className={styles.accountAvatar} style={{ padding: 0, overflow: "hidden" }}>
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user.name || "User"}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
+                      ) : (
+                        user.name?.charAt(0).toUpperCase() || "?"
+                      )}
                     </span>
                     <span className={styles.accountName}>{user.name?.split(" ")[0]}</span>
                     <span className={`${styles.accountChevron} ${menuOpen ? styles.accountChevronOpen : ""}`}>

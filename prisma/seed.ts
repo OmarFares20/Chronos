@@ -209,28 +209,44 @@ async function main() {
   console.log("✓ Admin created.");
 
   // ── 10 CUSTOMERS (Egyptian names) ──────────────────────────────────────────
+  // Customer avatar colors — distinct per customer, no human photos
+  const CUSTOMER_COLORS = [
+    { bg: "2d1b4e", fg: "C4A452" }, // purple-dark / gold
+    { bg: "1b2d4e", fg: "7ec8e3" }, // navy / sky
+    { bg: "1b4e2d", fg: "7ed6a6" }, // forest / mint
+    { bg: "4e2d1b", fg: "e3a87e" }, // brown / peach
+    { bg: "4e1b2d", fg: "e37ec8" }, // maroon / pink
+    { bg: "1b4e4e", fg: "7ee3e3" }, // teal / cyan
+    { bg: "4e4e1b", fg: "e3e37e" }, // olive / yellow
+    { bg: "2d4e1b", fg: "a8e37e" }, // green / lime
+    { bg: "1b1b4e", fg: "a07ee3" }, // indigo / lavender
+    { bg: "4e1b1b", fg: "e37e7e" }, // crimson / salmon
+  ];
+
   const CUSTOMERS_DATA = [
-    { name: "Yasmine El-Sayed",   email: "yasmine@example.com",  gender: "women", n: 22 },
-    { name: "Mohamed Youssef",    email: "mohamed@example.com",  gender: "men",   n: 33 },
-    { name: "Omar Hassan",        email: "omar@example.com",     gender: "men",   n: 15 },
-    { name: "Nour Ibrahim",       email: "nour@example.com",     gender: "women", n: 44 },
-    { name: "Salma Fouad",        email: "salma@example.com",    gender: "women", n: 55 },
-    { name: "Kareem Mansour",     email: "kareem@example.com",   gender: "men",   n: 12 },
-    { name: "Aya Tawfik",         email: "aya@example.com",      gender: "women", n: 67 },
-    { name: "Ahmed Zaki",         email: "ahmed@example.com",    gender: "men",   n: 41 },
-    { name: "Laila Osman",        email: "laila@example.com",    gender: "women", n: 31 },
-    { name: "Mahmoud El-Masry",   email: "mahmoud@example.com",  gender: "men",   n: 52 },
+    { name: "Yasmine El-Sayed",   email: "yasmine@example.com"  },
+    { name: "Mohamed Youssef",    email: "mohamed@example.com"  },
+    { name: "Omar Hassan",        email: "omar@example.com"     },
+    { name: "Nour Ibrahim",       email: "nour@example.com"     },
+    { name: "Salma Fouad",        email: "salma@example.com"    },
+    { name: "Kareem Mansour",     email: "kareem@example.com"   },
+    { name: "Aya Tawfik",         email: "aya@example.com"      },
+    { name: "Ahmed Zaki",         email: "ahmed@example.com"    },
+    { name: "Laila Osman",        email: "laila@example.com"    },
+    { name: "Mahmoud El-Masry",   email: "mahmoud@example.com"  },
   ];
 
   const createdCustomers: { id: string; name: string }[] = [];
-  for (const c of CUSTOMERS_DATA) {
+  for (let ci = 0; ci < CUSTOMERS_DATA.length; ci++) {
+    const c = CUSTOMERS_DATA[ci];
+    const col = CUSTOMER_COLORS[ci % CUSTOMER_COLORS.length];
     const u = await prisma.user.create({
       data: {
         name:      c.name,
         email:     c.email,
         password:  customerPassword,
         role:      "CUSTOMER",
-        avatarUrl: `https://randomuser.me/api/portraits/${c.gender}/${c.n}.jpg`,
+        avatarUrl: businessAvatar(c.name, col.bg, col.fg),
       },
     });
     createdCustomers.push({ id: u.id, name: u.name });
