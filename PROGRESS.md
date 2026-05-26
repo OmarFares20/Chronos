@@ -426,3 +426,20 @@
   - `.section` now has `margin-bottom: 4rem` — Portfolio and Packages & Pricing sections no longer run together
   - `gallery-grid` already had `grid-auto-rows: 180px` for consistent aspect ratios — confirmed working
 
+---
+
+## Admin Dispute Interaction & Provider Applications
+
+### [x] Fix 1 – Full Admin Dispute Management (Interaction + Messaging) ✅
+- **Status dropdown**: already had Save button — confirmed working with `credentials: "include"`
+- **Admin response textarea**: already had Save Response button with error display — confirmed working
+- **`creatorId` added** to `Dispute` interface in admin page
+- **Disputes GET API** (`/api/disputes`): `creator.id` now included in the select so `creatorId` is available to the frontend
+- **Admin page**: disputes mapped on load to surface `creatorId` from `creator.id`
+- **"Message [Filer]" button** added to dispute detail panel:
+  - Blue-tinted button below the Save Response section
+  - Calls `POST /api/messages/conversation` with `{ targetUserId: SEL.creatorId, initialMessage: "Hi [name], this is regarding your dispute: '[title]' (Ref #XXXXXX)..." }`
+  - On success: redirects to `/dashboard/messages?with=<creatorId>` — opens the chat
+  - On error: shows error in the existing `disputeError` block
+- **`/api/messages/conversation`** updated to accept either `providerId` OR `targetUserId` directly (for admin → any user messaging), plus an optional `initialMessage` override
+

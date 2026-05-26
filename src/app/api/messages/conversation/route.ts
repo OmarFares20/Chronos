@@ -1,76 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, UnauthorizedError } from "@/lib/auth";
 
 /**
  * POST /api/messages/conversation
- * Body: { providerId: string }
+ * Body: { providerId?: string, targetUserId?: string, initialMessage?: string }
  *
- * Looks up the provider's userId so the caller can open/create a conversation.
- * Returns { userId, name } — the User ID of the provider's account.
- * A first "hello" message is created if no conversation exists yet,
- * so the thread immediately appears in both inboxes.
+ * Opens or creates a conversation between the caller and a target user.
+ * - If `providerId` is given: resolves the provider's userId first.
+ * - If `targetUserId` is given directly (e.g. admin messaging a dispute filer): uses it as-is.
+ * Returns { userId, name }.
  */
 export async function POST(req: NextRequest) {
   try {
     const auth = requireAuth(req);
-    const { providerId } = await req.json();
+    const body = await req.json();
+    const { providerId, targetUserId: directTargetId, initialMessage } = body;
 
-    if (!providerId) {
-      return NextResponse.json({ error: "providerId is required" }, { status: 400 });
+    let targetUserId: string;
+    let targetName: string;
+
+    if (directTargetId) {
+      // Direct user-to-user (admin → filer, etc.)
+      const targetUser = await prisma.user.findUnique({
+        where: { id: directTargetId },
+        select: { id: true, name: true },
+      });
+      if (!targetUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
+      targetUserId = targetUser.id;
+      targetName   = targetUser.name;
+    } else if (providerId) {
+      // Customer → provider flow
+      const provider = await prisma.providerProfile.findUnique({
+        where: { id: providerId },
+        select: { userId: true, businessName: true },
+      });
+      if (!provider) return NextResponse.json({ error: "Provider not found" }, { status: 404 });
+      targetUserId = provider.userId;
+      targetName   = provider.businessName;
+    } else {
+      return NextResponse.json({ error: "providerId or targetUserId is required" }, { status: 400 });
     }
-
-    // Resolve the provider's user account
-    const provider = await prisma.providerProfile.findUnique({
-      where: { id: providerId },
-      select: { userId: true, businessName: true },
-    });
-
-    if (!provider) {
-      return NextResponse.json({ error: "Provider not found" }, { status: 404 });
-    }
-
-    const providerUserId = provider.userId;
 
     // Guard: can't message yourself
-    if (providerUserId === auth.userId) {
+    if (targetUserId === auth.userId) {
       return NextResponse.json({ error: "Cannot message yourself" }, { status: 400 });
     }
 
-    // Check if a conversation already exists (any message between the two)
+    // Check if conversation already exists
     const existing = await prisma.message.findFirst({
       where: {
         OR: [
-          { senderId: auth.userId, receiverId: providerUserId },
-          { senderId: providerUserId, receiverId: auth.userId },
+          { senderId: auth.userId,   receiverId: targetUserId },
+          { senderId: targetUserId,  receiverId: auth.userId  },
         ],
       },
     });
 
-    // If no messages exist yet, seed the conversation with a greeting
+    // Seed first message if new conversation
     if (!existing) {
-      const customer = await prisma.user.findUnique({
+      const sender = await prisma.user.findUnique({
         where: { id: auth.userId },
         select: { name: true },
       });
 
+      const content = initialMessage?.trim() ||
+        `Hi ${targetName}! I'd like to get in touch.`;
+
       await prisma.message.create({
         data: {
           senderId:   auth.userId,
-          receiverId: providerUserId,
-          content:    `Hi ${provider.businessName}! I'd like to learn more about your services.`,
+          receiverId: targetUserId,
+          content,
         },
       });
-
-      // Note: notifications are derived from unread messages — no separate model
     }
 
-    return NextResponse.json({
-      userId:       providerUserId,
-      businessName: provider.businessName,
-    });
+    return NextResponse.json({ userId: targetUserId, name: targetName });
   } catch (e: unknown) {
-    if (e instanceof Error && e.message === "UNAUTHORIZED")
+    if (e instanceof UnauthorizedError)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[messages/conversation POST]", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

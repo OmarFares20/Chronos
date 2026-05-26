@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: { createdAt: "desc" },
       include: {
-        creator:     { select: { name: true, email: true, role: true } },
+        creator:     { select: { id: true, name: true, email: true, role: true } },
         attachments: true,
         booking:     { select: { id: true, amount: true, provider: { select: { businessName: true } } } },
       },

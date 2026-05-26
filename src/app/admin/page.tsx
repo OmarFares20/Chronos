@@ -23,7 +23,7 @@ interface User    { id: string; name: string; email: string; role: string; creat
 interface Booking { id: string; amount: number; status: string; createdAt: string; customer: { name: string }; provider: { businessName: string }; package?: { name: string } }
 interface Provider{ id: string; businessName: string; location?: string; reviewCount: number; bookingCount: number; avgRating: number }
 interface Application { id: string; status: string; commercialRegister: string; taxCard: string; idCard: string; createdAt: string; user: { name: string; email: string }; rejectionReason: string | null }
-interface Dispute { id: string; title: string; description: string; status: string; creatorRole: string; adminResponse?: string; resolvedAt?: string; createdAt: string; creator: { name: string; email: string }; booking?: { id: string; amount: number; provider?: { businessName: string } }; attachments: { id: string; fileName: string; filePath: string }[] }
+interface Dispute { id: string; title: string; description: string; status: string; creatorRole: string; creatorId: string; adminResponse?: string; resolvedAt?: string; createdAt: string; creator: { name: string; email: string }; booking?: { id: string; amount: number; provider?: { businessName: string } }; attachments: { id: string; fileName: string; filePath: string }[] }
 
 type AdminTab = "overview" | "users" | "bookings" | "applications" | "disputes";
 
@@ -65,6 +65,7 @@ export default function AdminPage() {
   const [selectedDispute, setSelectedDispute]   = useState<Dispute | null>(null);
   const [disputeRoleFilter, setDisputeRoleFilter] = useState("");
   const [savingDispute, setSavingDispute]         = useState(false);
+  const [messagingLoading, setMessagingLoading]     = useState(false);
   const [disputeSaveMsg, setDisputeSaveMsg]       = useState("");
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
@@ -111,7 +112,12 @@ export default function AdminPage() {
       if (disputeRoleFilter) params.set("role", disputeRoleFilter);
       fetch("/api/disputes" + (params.toString() ? `?${params}` : ""))
         .then((r) => r.ok ? r.json() : { disputes: [] })
-        .then((d) => setDisputes(d.disputes || []))
+        .then((d) => setDisputes(
+          (d.disputes || []).map((disp: Record<string, unknown> & { creator?: { id?: string } }) => ({
+            ...disp,
+            creatorId: disp.creatorId || (disp.creator as { id?: string })?.id || "",
+          }))
+        ))
         .catch(() => {})
         .finally(() => setDisputeLoading(false));
       return;
@@ -656,6 +662,43 @@ export default function AdminPage() {
                       <span style={{ fontSize: "0.78rem", color: "#50c878", fontWeight: 700 }}>{disputeSaveMsg}</span>
                     )}
                   </div>
+                </div>
+
+                {/* Message Filer */}
+                <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
+                    Direct Communication
+                  </p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginBottom: "0.6rem" }}>
+                    Open a conversation with <strong style={{ color: "var(--color-text-primary)" }}>{SEL.creator.name}</strong> about this dispute.
+                  </p>
+                  <button
+                    disabled={messagingLoading}
+                    onClick={async () => {
+                      setMessagingLoading(true);
+                      try {
+                        const res = await fetch("/api/messages/conversation", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          credentials: "include",
+                          body: JSON.stringify({
+                            targetUserId: SEL.creatorId,
+                            initialMessage: `Hi ${SEL.creator.name}, this is regarding your dispute: "${SEL.title}" (Ref #${SEL.id.slice(-6).toUpperCase()}). We are looking into this and will update you shortly.`,
+                          }),
+                        });
+                        if (res.ok) {
+                          window.location.href = `/dashboard/messages?with=${SEL.creatorId}`;
+                        } else {
+                          const d = await res.json();
+                          setDisputeError(d.error || "Could not open conversation.");
+                        }
+                      } finally {
+                        setMessagingLoading(false);
+                      }
+                    }}
+                    style={{ width: "100%", padding: "0.65rem", background: "rgba(86,179,255,0.12)", border: "1px solid rgba(86,179,255,0.3)", borderRadius: 8, color: "#56b3ff", fontWeight: 700, fontSize: "0.82rem", fontFamily: "var(--font-body)", cursor: messagingLoading ? "wait" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    {messagingLoading ? "Opening…" : `💬 Message ${SEL.creator.name}`}
+                  </button>
                 </div>
               </div>
             )}
