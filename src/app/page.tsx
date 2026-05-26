@@ -242,39 +242,50 @@ export default async function HomePage() {
             <p className={styles.sectionDesc}>
               Verified professionals with outstanding track records — trusted by thousands of Egyptian families.
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.25rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1.25rem" }}>
               {featuredProviders.map((p) => (
-                <Link key={p.id} href={`/providers/${p.id}`}
-                  style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", background: "rgba(14,15,22,0.95)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, textDecoration: "none", transition: "all 0.2s", position: "relative", overflow: "hidden" }}>
-                  {/* Gold shimmer line */}
+                <Link key={p.id} href={`/providers/${p.id}`} style={{
+                  display: "flex", flexDirection: "column",
+                  padding: "1.5rem", background: "rgba(14,15,22,0.95)",
+                  border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16,
+                  textDecoration: "none", transition: "transform 0.2s, box-shadow 0.2s",
+                  position: "relative", overflow: "hidden",
+                }}>
+                  {/* Shimmer top border */}
                   <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, var(--color-gold), transparent)" }} />
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+
+                  {/* Provider identity */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.85rem", marginBottom: "1rem" }}>
                     <img
                       src={p.user?.avatarUrl || p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.businessName.slice(0,2))}&background=1a1b2e&color=C4A452&size=56`}
                       alt={p.businessName}
-                      style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", border: "2px solid rgba(196,164,82,0.3)", flexShrink: 0 }}
+                      style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover", border: "2px solid rgba(196,164,82,0.25)", flexShrink: 0 }}
                     />
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                        <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{p.businessName}</p>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: "0.62rem", fontWeight: 700, color: "#50c878", background: "rgba(80,200,120,0.1)", border: "1px solid rgba(80,200,120,0.3)", borderRadius: 99, padding: "0.1rem 0.4rem" }}>✓ Verified</span>
-                      </div>
-                      <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{p.categories[0]?.replace("_", " ")} · {p.location}</p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.businessName}</p>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.6rem", fontWeight: 700, color: "#50c878", background: "rgba(80,200,120,0.1)", border: "1px solid rgba(80,200,120,0.3)", borderRadius: 99, padding: "0.1rem 0.45rem" }}>✓ Verified</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        {"★★★★★".split("").map((star, i) => (
-                          <span key={i} style={{ fontSize: "0.8rem", color: i < Math.round(p.avgRating || 0) ? "var(--color-gold)" : "rgba(255,255,255,0.15)" }}>{star}</span>
-                        ))}
-                        <span style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", marginLeft: 4 }}>{p.avgRating?.toFixed(1)} ({p.reviewCount})</span>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: "0.78rem", color: "var(--color-gold)", fontWeight: 700 }}>From {formatPrice(p.minPrice || 0)}</span>
+
+                  {/* Category + location */}
+                  <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", marginBottom: "0.85rem" }}>
+                    {p.categories[0]?.replace("_", " ")} &nbsp;·&nbsp; {p.location}
+                  </p>
+
+                  {/* Rating row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: "0.85rem" }}>
+                    {"★★★★★".split("").map((star, i) => (
+                      <span key={i} style={{ fontSize: "0.78rem", color: i < Math.round(p.avgRating || 0) ? "var(--color-gold)" : "rgba(255,255,255,0.15)" }}>{star}</span>
+                    ))}
+                    <span style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginLeft: 2 }}>{(p.avgRating || 0).toFixed(1)} ({p.reviewCount})</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: "var(--color-gold)", fontSize: "0.78rem", gap: 4 }}>
-                    View Profile <ArrowRight size={14} />
+
+                  {/* Footer: price + CTA */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "0.85rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                    <span style={{ fontSize: "0.8rem", color: "var(--color-gold)", fontWeight: 700 }}>From {formatPrice(p.minPrice || 0)}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--color-gold)", fontSize: "0.75rem", fontWeight: 600 }}>
+                      View Profile <ArrowRight size={13} />
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -309,20 +320,22 @@ export default async function HomePage() {
                     </div>
                     {/* Gold bg shimmer */}
                     <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at top left, rgba(196,164,82,0.06) 0%, transparent 60%)", pointerEvents: "none" }} />
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    {/* Provider identity — push right of badge with padding-right */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingRight: "4.5rem" }}>
                       <img
                         src={`https://picsum.photos/seed/${pkg.service.provider.businessName.replace(/\s+/g, "")}/56`}
                         alt={pkg.service.provider.businessName}
-                        style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(196,164,82,0.25)" }}
+                        style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(196,164,82,0.25)", flexShrink: 0 }}
                       />
-                      <div>
-                        <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: 2 }}>{pkg.name}</p>
-                        <p style={{ fontSize: "0.72rem", color: "var(--color-gold)" }}>{pkg.service.provider.businessName}</p>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pkg.name}</p>
+                        <p style={{ fontSize: "0.7rem", color: "var(--color-gold)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pkg.service.provider.businessName}</p>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", marginTop: "auto" }}>
-                      <span style={{ textDecoration: "line-through", color: "var(--color-text-muted)", fontSize: "0.82rem" }}>{formatPrice(orig)}</span>
-                      <span style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--color-gold)" }}>{formatPrice(Number(pkg.price))}</span>
+                    {/* Price comparison */}
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", marginTop: "auto", paddingTop: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      <span style={{ textDecoration: "line-through", color: "var(--color-text-muted)", fontSize: "0.8rem" }}>{formatPrice(orig)}</span>
+                      <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--color-gold)" }}>{formatPrice(Number(pkg.price))}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", color: "var(--color-gold)", fontSize: "0.75rem", gap: 4, fontWeight: 600 }}>
                       Book this deal <ArrowRight size={12} />
@@ -375,32 +388,49 @@ export default async function HomePage() {
             <h2 className={styles.sectionTitle}>
               Real Stories, <span className="text-gold">Real Magic</span>
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.1rem" }}>
               {recentReviews.map((r) => (
-                <div key={r.id}
-                  style={{ padding: "1.5rem", background: "rgba(14,15,22,0.9)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div key={r.id} style={{
+                  padding: "1.5rem", background: "rgba(14,15,22,0.9)",
+                  border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16,
+                  display: "flex", flexDirection: "column", gap: "0.85rem",
+                  /* equal height via grid stretch */
+                }}>
+                  {/* Stars */}
                   <div style={{ display: "flex", gap: 2 }}>
                     {"★★★★★".split("").map((s, i) => (
-                      <span key={i} style={{ color: "var(--color-gold)", fontSize: "0.85rem" }}>{s}</span>
+                      <span key={i} style={{ color: "var(--color-gold)", fontSize: "0.82rem" }}>{s}</span>
                     ))}
                   </div>
-                  <p style={{ fontSize: "0.88rem", color: "var(--color-text-muted)", lineHeight: 1.65, fontStyle: "italic", flex: 1 }}>
+
+                  {/* Comment — clamped to 4 lines for uniform height */}
+                  <p style={{
+                    fontSize: "0.86rem", color: "var(--color-text-muted)", lineHeight: 1.65,
+                    fontStyle: "italic", flex: 1,
+                    display: "-webkit-box", WebkitLineClamp: 4,
+                    WebkitBoxOrient: "vertical", overflow: "hidden",
+                  }}>
                     "{r.comment}"
                   </p>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+
+                  {/* Divider */}
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.05)" }} />
+
+                  {/* Author + provider attribution */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.55rem", minWidth: 0 }}>
                       <img
                         src={r.customer?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent((r.customer?.name || "C").slice(0,2))}&background=1a1b2e&color=C4A452&size=36`}
                         alt={r.customer?.name || "Customer"}
-                        style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }}
+                        style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}
                       />
-                      <div>
-                        <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--color-text-primary)" }}>{r.customer?.name}</p>
-                        <p style={{ fontSize: "0.68rem", color: "var(--color-text-muted)" }}>via Chronos</p>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--color-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.customer?.name}</p>
+                        <p style={{ fontSize: "0.65rem", color: "var(--color-text-muted)" }}>via Chronos</p>
                       </div>
                     </div>
-                    <span style={{ fontSize: "0.68rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
-                      re: {r.provider?.businessName?.split(" ").slice(0, 2).join(" ")}
+                    <span style={{ fontSize: "0.65rem", color: "var(--color-text-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                      {r.provider?.businessName?.split(" ").slice(0, 2).join(" ")}
                     </span>
                   </div>
                 </div>

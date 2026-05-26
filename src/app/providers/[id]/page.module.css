@@ -239,7 +239,11 @@
 /* ── MAIN ──────────────────────────────────────────── */
 .main { min-width: 0; }
 
-.section { animation: fadeInUp 0.4s var(--ease-elegant) both; }
+.section {
+  animation: fadeInUp 0.4s var(--ease-elegant) both;
+  margin-bottom: 4rem;   /* vertical breathing room between sections */
+}
+.section:last-child { margin-bottom: 0; }
 
 .sectionTitle {
   font-family: var(--font-display);

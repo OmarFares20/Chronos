@@ -406,3 +406,23 @@
 - **Homepage reviews** (`src/app/page.tsx`): already uses `r.customer?.avatarUrl` with ui-avatars fallback — no change needed
 - **Re-seed required**: `npx prisma db seed` to apply new customer avatars
 
+### [x] Fix 2 – Homepage Layout & Provider Page Spacing ✅
+- **Featured Providers grid** (`src/app/page.tsx`):
+  - Cards now flex column with `marginTop: "auto"` on the footer row — equal height regardless of name/location length
+  - Business name truncated with `textOverflow: ellipsis` so long names don't break layout
+  - Verified badge moved below the name (separate line) to avoid squishing
+  - Category + location on its own line with consistent `0.85rem` gap to rating row
+  - Rating row and price/CTA row separated by a subtle `borderTop` divider
+- **Exclusive Deals** (`src/app/page.tsx`):
+  - Provider identity block gets `paddingRight: "4.5rem"` so long business names never slide under the gold discount badge
+  - Name and provider name both get `textOverflow: ellipsis` clipping
+  - Price comparison pushed to its own row with a top border separator
+- **Customer Reviews** (`src/app/page.tsx`):
+  - Comment text clamped to 4 lines (`-webkit-line-clamp: 4`) — all cards uniform height
+  - Subtle `height: 1` divider between comment and author row
+  - Author name clipped with ellipsis; provider attribution kept as a small right-aligned label
+  - Gap reduced to `0.85rem` for tighter, more consistent vertical rhythm
+- **Provider detail page** (`src/app/providers/[id]/page.module.css`):
+  - `.section` now has `margin-bottom: 4rem` — Portfolio and Packages & Pricing sections no longer run together
+  - `gallery-grid` already had `grid-auto-rows: 180px` for consistent aspect ratios — confirmed working
+
