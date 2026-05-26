@@ -450,22 +450,30 @@ export default function MessagesPage() {
                           {new Date(msg.createdAt).toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}
                         </div>
                       )}
-                      <div className={`${styles.messageRow} ${isSelf ? styles.messageRowSelf : styles.messageRowOther}`}>
-                        {!isSelf && (
-                          <div className={styles.bubbleAvatar} style={{ padding: 0, overflow: "hidden" }}>
-                            {activeConv.avatarUrl ? (
+                      <div className={`${styles.messageBubble} ${isSelf ? styles.messageBubbleSelf : ""}`}>
+                        {/* Avatar — shown on left for received, right for sent */}
+                        <div className={styles.bubbleAvatar} style={{ padding: 0, overflow: "hidden" }}>
+                          {isSelf ? (
+                            user?.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={user.name}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                            ) : (
+                              user?.name?.charAt(0).toUpperCase()
+                            )
+                          ) : (
+                            activeConv.avatarUrl ? (
                               <img src={activeConv.avatarUrl} alt={activeConv.name}
                                 style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                             ) : (
                               activeConv.name.charAt(0)
-                            )}
-                          </div>
-                        )}
+                            )
+                          )}
+                        </div>
                         <div className={styles.bubbleContent}>
-                          <div className={`${styles.bubbleText} ${isSelf ? styles.bubbleTextSelf : styles.bubbleTextOther}`}>
+                          <div className={styles.bubbleText}>
                             {msg.content}
                           </div>
-                          <span className={`${styles.bubbleTime} ${isSelf ? styles.bubbleTimeSelf : ""}`}>
+                          <span className={styles.bubbleTime}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             {isSelf && (
                               <span style={{
