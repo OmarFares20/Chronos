@@ -437,20 +437,30 @@ export default function AdminPage() {
         const saveDispute = async (updates: { status?: string; adminResponse?: string }) => {
           if (!SEL) return;
           setSavingDispute(true);
+          setDisputeError("");
+          setDisputeSaveMsg("");
           try {
             const res = await fetch(`/api/disputes/${SEL.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
+              credentials: "include",
               body: JSON.stringify(updates),
             });
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
               const merged = { ...SEL, ...updates };
               setSelectedDispute(merged as Dispute);
               setDisputes(prev => prev.map(x => x.id === SEL.id ? merged as Dispute : x));
-              setDisputeSaveMsg("✓ Saved");
-              setTimeout(() => setDisputeSaveMsg(""), 2000);
+              setDisputeSaveMsg("✓ Saved successfully");
+              setTimeout(() => setDisputeSaveMsg(""), 3000);
+            } else {
+              setDisputeError(data.error || `Error ${res.status}: failed to save`);
             }
-          } finally { setSavingDispute(false); }
+          } catch (e) {
+            setDisputeError("Network error — please try again.");
+          } finally {
+            setSavingDispute(false);
+          }
         };
 
         return (
@@ -602,14 +612,22 @@ export default function AdminPage() {
                   <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
                     Update Status
                   </label>
-                  <select value={SEL.status}
-                    onChange={(e) => { setSelectedDispute({ ...SEL, status: e.target.value }); saveDispute({ status: e.target.value }); }}
-                    style={{ width: "100%", padding: "0.6rem 0.9rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.85rem", outline: "none" }}>
-                    <option value="OPEN">Open</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="RESOLVED">Resolved</option>
-                    <option value="CLOSED">Closed</option>
-                  </select>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <select value={SEL.status}
+                      onChange={(e) => setSelectedDispute({ ...SEL, status: e.target.value })}
+                      style={{ flex: 1, padding: "0.6rem 0.9rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.4)", color: "var(--color-text-primary)", fontFamily: "var(--font-body)", fontSize: "0.85rem", outline: "none" }}>
+                      <option value="OPEN">Open</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="RESOLVED">Resolved</option>
+                      <option value="CLOSED">Closed</option>
+                    </select>
+                    <button
+                      onClick={() => saveDispute({ status: SEL.status })}
+                      disabled={savingDispute}
+                      style={{ padding: "0.6rem 1rem", background: "rgba(196,164,82,0.15)", border: "1px solid rgba(196,164,82,0.35)", borderRadius: 8, color: "var(--color-gold)", fontWeight: 700, fontSize: "0.78rem", fontFamily: "var(--font-body)", cursor: savingDispute ? "wait" : "pointer", whiteSpace: "nowrap" }}>
+                      Save
+                    </button>
+                  </div>
                 </div>
 
                 {/* Admin response */}
@@ -622,6 +640,11 @@ export default function AdminPage() {
                     onChange={(e) => setDisputeResponse(prev => ({ ...prev, [SEL.id]: e.target.value }))}
                     style={{ width: "100%", padding: "0.75rem", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "var(--color-text-primary)", fontSize: "0.85rem", fontFamily: "var(--font-body)", resize: "vertical", outline: "none", boxSizing: "border-box" }}
                   />
+                  {disputeError && (
+                    <div style={{ marginTop: "0.5rem", padding: "0.6rem 0.8rem", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ff6b6b", fontSize: "0.78rem" }}>
+                      ⚠ {disputeError}
+                    </div>
+                  )}
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.6rem" }}>
                     <button
                       onClick={() => saveDispute({ adminResponse: disputeResponse[SEL.id] ?? SEL.adminResponse ?? "" })}
@@ -630,7 +653,7 @@ export default function AdminPage() {
                       {savingDispute ? "Saving…" : "Save Response"}
                     </button>
                     {disputeSaveMsg && (
-                      <span style={{ fontSize: "0.78rem", color: "#50c878", fontWeight: 600 }}>{disputeSaveMsg}</span>
+                      <span style={{ fontSize: "0.78rem", color: "#50c878", fontWeight: 700 }}>{disputeSaveMsg}</span>
                     )}
                   </div>
                 </div>

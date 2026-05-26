@@ -379,3 +379,13 @@
   - Admin Console nav link was already conditionally shown for ADMIN — unchanged
 - **Quick DB fix** if admin already exists with wrong role: run `npx prisma studio` → Users table → find admin@chronos.com → set role to ADMIN, or re-seed with `npx prisma db seed`
 
+### [x] Fix 2 – Admin Dispute Interaction ✅
+- **Root cause**: `saveDispute` silently swallowed errors and the status dropdown auto-saved on every change without feedback — admins had no way to know if saves succeeded or failed
+- **`credentials: "include"`** added to all dispute PATCH fetches so the auth cookie is sent correctly
+- **Status dropdown**: removed auto-save-on-change; now updates local state only; added explicit **"Save" button** next to the dropdown that calls `saveDispute({ status })`
+- **Error display**: `disputeError` state added; any API error (403, 500, network) surfaces as a red warning block above the Save Response button
+- **Success feedback**: `disputeSaveMsg` now shows "✓ Saved successfully" for 3 seconds after any successful save
+- **API** (`PATCH /api/disputes/[id]`): already correct — Zod-validated, admin-only, sets `resolvedAt` on RESOLVED/CLOSED, returns updated dispute
+- **Attachments**: already shown as gold pill links in the detail panel (open in new tab)
+- **Flow**: admin clicks row → detail panel opens → changes status + writes response → clicks Save (status) or Save Response → sees confirmation or error inline
+
